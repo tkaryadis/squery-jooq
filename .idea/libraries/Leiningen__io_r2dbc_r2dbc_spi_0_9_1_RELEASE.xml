@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Leiningen: io.r2dbc/r2dbc-spi:0.9.1.RELEASE">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/r2dbc/r2dbc-spi/0.9.1.RELEASE/r2dbc-spi-0.9.1.RELEASE.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
