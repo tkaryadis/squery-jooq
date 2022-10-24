@@ -1,7 +1,8 @@
-(ns squery-jooq.utils
+(ns squery-jooq.utils.general
   (:require clojure.repl
             flatland.ordered.map
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io])
+  (:import (org.jooq.impl DSL)))
 
 (defn ordered-map
   ([] (flatland.ordered.map/ordered-map))
@@ -20,7 +21,6 @@
             {}
             (keys m))
     m))
-
 
 (defn string-map
   "Makes keyword keys to strings"

@@ -6,7 +6,7 @@
             [squery-jooq.state :refer [connect ctx]]
             [squery-jooq.printing :refer [print-results print-sql print-json-results]])
   (:refer-clojure)
-  (:import (org.jooq SQLDialect DSLContext Field Table SelectFieldOrAsterisk)
+  (:import (org.jooq SQLDialect DSLContext Field Table SelectFieldOrAsterisk Results)
            (org.jooq.impl DSL)
            (org.jooq.conf Settings StatementType)))
 
@@ -19,5 +19,4 @@
 ;.crossJoin(WEEKDAY)
 ;.fetch();
 
-;;crossJoin
-(pq :employee)
+;;TODO add examples

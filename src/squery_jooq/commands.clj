@@ -39,7 +39,7 @@
         ;_ (prn "query" query)
         ]
     `(let ~squery-jooq.operators/operators-mappings
-       (squery-jooq.printing/print-json-results ~query))))
+       (squery-jooq.printing/print-results ~query))))
 
 (defmacro pq [& qforms]
   (let [qforms (switch-select-from qforms true)
@@ -48,7 +48,7 @@
         ;_ (prn "query" query)
         ]
     `(let ~squery-jooq.operators/operators-mappings
-       (squery-jooq.printing/print-json-results ~query))))
+       (squery-jooq.printing/print-results ~query))))
 
 #_(defmacro sq [arg]
     `(let ~squery-spark.datasets.operators/operators-mappings
@@ -94,7 +94,7 @@
   (let [dforms (delete-pipeline dforms)
         dforms (concat [`(.delete (table ~dtable))] dforms)
         dquery (concat (list '-> '@ctx) dforms [`(.execute)])
-        ;_ (prn "dquery" dquery)
+        _ (prn "dquery" dquery)
         ]
     `(let ~squery-jooq.operators/operators-mappings
        ~dquery)))

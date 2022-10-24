@@ -1,5 +1,5 @@
 (ns squery-jooq.internal.common
-  (:require [squery-jooq.utils :refer [keyword-map string-map]]
+  (:require [squery-jooq.utils.general :refer [keyword-map string-map]]
             clojure.set)
   (:import (org.jooq.impl DSL)
            (org.jooq Field Table JSONEntry)))
@@ -56,15 +56,18 @@
 (defn columns [fields]
   (mapv column fields))
 
+;;(pq (.as (values [1 "a"] [2 "b"])
+;         "t" (into-array String ["a" "b"])))
+
 (defn table [t]
   (cond
         (or (keyword? t) (string? t))
         (DSL/table (name t))
 
         (map? t)
-        (let [k (name (first (keys t)))
+        (let [k (first (keys t))
               v (table (first (vals t)))]
-          (.as ^Table v k))
+          (.as ^Table v (name k)))
 
         :else
         t))

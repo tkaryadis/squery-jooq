@@ -15,10 +15,10 @@
                             repeat])
   (:require [clojure.core :as c]
             [squery-jooq.internal.common :refer [column columns sort-arguments]]
-            [squery-jooq.utils :refer [nested2]]
+            [squery-jooq.utils.general :refer [nested2]]
             [squery-jooq.schema :refer [schema-types]])
   (:import (org.jooq.impl DSL)
-           (org.jooq Field SelectField)))
+           (org.jooq Field SelectField Row1 Row2 Row3 Row6 Row5 Row4)))
 
 ;;Operators for columns
 
@@ -491,10 +491,41 @@
 
 (def star (DSL/asterisk))
 
-;;TODO maybe alternative call way
 (defn row
   ([field] (DSL/row (column field)))
-  ([field1 field2] (DSL/row (column field1) (column field2))))
+  ([field1 field2] (DSL/row (column field1) (column field2)))
+  ([field1 field2 field3] (DSL/row (column field1) (column field2) (column field3)))
+  ([field1 field2 field3 field4] (DSL/row (column field1) (column field2) (column field3) (column field4)))
+  ([field1 field2 field3 field4 field5] (DSL/row (column field1) (column field2) (column field3) (column field4) (column field5)))
+  ([field1 field2 field3 field4 field5 field6] (DSL/row (column field1)
+                                                        (column field2)
+                                                        (column field3)
+                                                        (column field4)
+                                                        (column field5)
+                                                        (column field6))))
+
+(defn values [& rows-vec]
+  (c/cond
+    (c/= (c/count (c/first rows-vec)) 1)
+    (DSL/values (c/into-array Row1 (c/map row rows-vec)))
+
+    (c/= (c/count (c/first rows-vec)) 2)
+    (DSL/values (c/into-array Row2 (c/mapv #(apply row %) rows-vec)))
+
+    (c/= (c/count (c/first rows-vec)) 3)
+    (DSL/values (c/into-array Row3 (c/mapv #(apply row %) rows-vec)))
+
+    (c/= (c/count (c/first rows-vec)) 4)
+    (DSL/values (c/into-array Row4 (c/mapv #(apply row %) rows-vec)))
+
+    (c/= (c/count (c/first rows-vec)) 5)
+    (DSL/values (c/into-array Row5 (c/mapv #(apply row %) rows-vec)))
+
+    (c/= (c/count (c/first rows-vec)) 6)
+    (DSL/values (c/into-array Row6 (c/mapv #(apply row %) rows-vec)))
+
+    :else
+    (throw (Exception. "Values don't support the number of fields."))))
 
 ;;TODO no need to override clojure, i can have internal names with other names
 ;;extra cost is minimal but maybe i can use a walk in the macro to see which operators the query needs only
@@ -600,6 +631,7 @@
     desc   squery-jooq.operators/desc
     star   squery-jooq.operators/star
     row    squery-jooq.operators/row
+    values squery-jooq.operators/values
 
     ;;stages
     select squery-jooq.stages/select
@@ -616,8 +648,12 @@
 
     ;;stages joins
     join   squery-jooq.stages/join
-    join-left-outer  squery-jooq.stages/join-left-outer
-    join-cross squery-jooq.stages/join-cross
+    left-outer-join  squery-jooq.stages/left-outer-join
+    right-outer-join  squery-jooq.stages/right-outer-join
+    full-join squery-jooq.stages/full-join
+    left-semi-join squery-jooq.stages/left-semi-join
+    left-anti-join squery-jooq.stages/left-anti-join
+    cross-join squery-jooq.stages/cross-join
 
     ;;update-stages
     set-columns  squery-jooq.stages/set-columns

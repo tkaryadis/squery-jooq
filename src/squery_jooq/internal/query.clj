@@ -7,14 +7,29 @@
   (let [;;first always the from
         qforms (if from-also?
                  (let [from (first qforms)
+                       from (if (and (vector? from) (vector? (first from)))
+                              (let [header (first from)
+                                    table-name (name (first header))
+                                    header (mapv name (rest header))
+                                    table (into [] (rest from))]
+                                `(.as (apply squery-jooq.operators/values ~table)
+                                      ~table-name
+                                      (into-array String ~header)))
+                              from)
                        from-coll (if (not (vector? from)) [from] from)]
                    (concat [`(squery-jooq.stages/from ~from-coll)] (rest qforms)))
                  qforms)
+        [qforms table-alias ] (if (or (keyword? (last qforms)) (string? (last qforms)))
+                               [(drop-last qforms) (name (last qforms))]
+                               [qforms nil])
         ;;last always the select
         qforms (if (vector? (last qforms))
                  (let [last-form (last qforms)]
                    (concat [`(squery-jooq.stages/select ~last-form)] (butlast qforms)))
-                 (concat [`(squery-jooq.stages/select [])] qforms))]
+                 (concat [`(squery-jooq.stages/select [])] qforms))
+        qforms (if table-alias
+                 (concat qforms [`(.asTable ~table-alias)])
+                 qforms)]
     qforms))
 
 (defn pipeline
