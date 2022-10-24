@@ -4,7 +4,7 @@
             [squery-jooq.stages :refer :all]
             [squery-jooq.commands :refer [q]]
             [squery-jooq.state :refer [connect ctx]]
-            [squery-jooq.printing :refer [print-results print-sql print-json-results]])
+            [squery-jooq.printing :refer [print-results print-sql ]])
   (:refer-clojure)
   (:import (org.jooq SQLDialect DSLContext Field Table SelectFieldOrAsterisk)
            (org.jooq.impl DSL)

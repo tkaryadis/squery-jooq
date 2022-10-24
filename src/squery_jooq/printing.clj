@@ -1,7 +1,6 @@
 (ns squery-jooq.printing
   (:require clojure.pprint
-            [squery-jooq.utils.general :refer [isJavaArray?]]
-            [squery-jooq.utils.dsl :refer [get-field-names]])
+            [squery-jooq.utils.general :refer [isJavaArray?]])
   (:import (org.jooq Result)
            (java.util Arrays)))
 
