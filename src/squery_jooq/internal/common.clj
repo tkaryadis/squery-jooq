@@ -1,8 +1,9 @@
 (ns squery-jooq.internal.common
   (:require [squery-jooq.utils.general :refer [keyword-map string-map]]
-            clojure.set)
+            clojure.set
+            [clojure.core :as c])
   (:import (org.jooq.impl DSL)
-           (org.jooq Field Table JSONEntry)))
+           (org.jooq Field Table JSONEntry Row Row1 Row2 Row3 Row4 Row5 Row6)))
 
 ;;the first 2 functions is to use
 ;;  keyword instead(col ...)
@@ -28,7 +29,7 @@
   ;(prn field (type field) (instance? Field field))
   (cond
 
-    (instance? Field field)
+    (or (instance? Field field) (instance? Row field))
     field
 
     (keyword? field)
@@ -56,6 +57,42 @@
 (defn columns [fields]
   (mapv column fields))
 
+(defn row-internal
+  ([field] (DSL/row (column field)))
+  ([field1 field2] (DSL/row (column field1) (column field2)))
+  ([field1 field2 field3] (DSL/row (column field1) (column field2) (column field3)))
+  ([field1 field2 field3 field4] (DSL/row (column field1) (column field2) (column field3) (column field4)))
+  ([field1 field2 field3 field4 field5] (DSL/row (column field1) (column field2) (column field3) (column field4) (column field5)))
+  ([field1 field2 field3 field4 field5 field6] (DSL/row (column field1)
+                                                        (column field2)
+                                                        (column field3)
+                                                        (column field4)
+                                                        (column field5)
+                                                        (column field6))))
+
+(defn values-internal [rows-vec]
+  (c/cond
+    (c/= (c/count (c/first rows-vec)) 1)
+    (DSL/values (c/into-array Row1 (c/map #(apply row-internal %) rows-vec)))
+
+    (c/= (c/count (c/first rows-vec)) 2)
+    (DSL/values (c/into-array Row2 (c/mapv #(apply row-internal %) rows-vec)))
+
+    (c/= (c/count (c/first rows-vec)) 3)
+    (DSL/values (c/into-array Row3 (c/mapv #(apply row-internal %) rows-vec)))
+
+    (c/= (c/count (c/first rows-vec)) 4)
+    (DSL/values (c/into-array Row4 (c/mapv #(apply row-internal %) rows-vec)))
+
+    (c/= (c/count (c/first rows-vec)) 5)
+    (DSL/values (c/into-array Row5 (c/mapv #(apply row-internal %) rows-vec)))
+
+    (c/= (c/count (c/first rows-vec)) 6)
+    (DSL/values (c/into-array Row6 (c/mapv #(apply row-internal %) rows-vec)))
+
+    :else
+    (throw (Exception. "Values don't support the number of fields."))))
+
 ;;(pq (.as (values [1 "a"] [2 "b"])
 ;         "t" (into-array String ["a" "b"])))
 
@@ -63,6 +100,18 @@
   (cond
         (or (keyword? t) (string? t))
         (DSL/table (name t))
+
+        (vector? t)
+        (let [schema (first t)
+              table-values (into [] (rest t))
+              table-name (first schema)
+              table-columns (mapv (fn [c] (if (keyword? c)
+                                            (name c)
+                                            c))
+                                  (rest schema))]
+          (.as (values-internal table-values)
+               (name table-name)
+               (into-array String table-columns)))
 
         (map? t)
         (let [k (first (keys t))

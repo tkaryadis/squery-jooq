@@ -12,7 +12,7 @@ create compact DSL's without the need to use extra languages in our code.
 ```
 (q :author
    (join :book (= :author.id :book.author_id))
-   ((= :book.title "1984") (> :book.published_in 2008))
+   ((= :book.language "DE") (> :book.published_in 2008))
    (group :author.first_name :author.last_name)
    ((> (count-acc) 5))
    (sort :author.last_name)

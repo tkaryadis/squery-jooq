@@ -14,7 +14,7 @@
                             long-array
                             repeat])
   (:require [clojure.core :as c]
-            [squery-jooq.internal.common :refer [column columns sort-arguments]]
+            [squery-jooq.internal.common :refer [column columns sort-arguments values-internal row-internal]]
             [squery-jooq.utils.general :refer [nested2]]
             [squery-jooq.schema :refer [schema-types]])
   (:import (org.jooq.impl DSL)
@@ -108,15 +108,17 @@
 ;;--------------------------------------------------------------------------
 
 (defn and [& cols]
-  (nested2 #(.and (column %1) (column %2))  cols))
+  (nested2 #(.and (column %1) (column %2))  (if (c/= (c/count cols) 1)
+                                              (c/concat cols [(column true)])
+                                              cols)))
 
 (defn or [& cols]
-  (nested2 #(.or (column %1) (column %2)) cols))
+  (nested2 #(.or (column %1) (column %2)) (if (c/= (c/count cols) 1)
+                                            (c/concat cols [(column false)])
+                                            cols)))
 
 (defn not [col]
   (.not (column col)))
-
-
 
 ;;---------------------------Conditional------------------------------------
 ;;--------------------------------------------------------------------------
@@ -478,6 +480,11 @@
 (defn not-like [pattern-str col]
   (.notLike (column col) pattern-str))
 
+;;-----------------------------------subqueries-----------------------------
+
+(defn exists? [query]
+  (DSL/exists query))
+
 ;;-----------------------------------various--------------------------------
 
 (defn inline [position]
@@ -491,41 +498,11 @@
 
 (def star (DSL/asterisk))
 
-(defn row
-  ([field] (DSL/row (column field)))
-  ([field1 field2] (DSL/row (column field1) (column field2)))
-  ([field1 field2 field3] (DSL/row (column field1) (column field2) (column field3)))
-  ([field1 field2 field3 field4] (DSL/row (column field1) (column field2) (column field3) (column field4)))
-  ([field1 field2 field3 field4 field5] (DSL/row (column field1) (column field2) (column field3) (column field4) (column field5)))
-  ([field1 field2 field3 field4 field5 field6] (DSL/row (column field1)
-                                                        (column field2)
-                                                        (column field3)
-                                                        (column field4)
-                                                        (column field5)
-                                                        (column field6))))
+(defn row [& fields]
+  (apply row-internal fields))
 
 (defn values [& rows-vec]
-  (c/cond
-    (c/= (c/count (c/first rows-vec)) 1)
-    (DSL/values (c/into-array Row1 (c/map row rows-vec)))
-
-    (c/= (c/count (c/first rows-vec)) 2)
-    (DSL/values (c/into-array Row2 (c/mapv #(apply row %) rows-vec)))
-
-    (c/= (c/count (c/first rows-vec)) 3)
-    (DSL/values (c/into-array Row3 (c/mapv #(apply row %) rows-vec)))
-
-    (c/= (c/count (c/first rows-vec)) 4)
-    (DSL/values (c/into-array Row4 (c/mapv #(apply row %) rows-vec)))
-
-    (c/= (c/count (c/first rows-vec)) 5)
-    (DSL/values (c/into-array Row5 (c/mapv #(apply row %) rows-vec)))
-
-    (c/= (c/count (c/first rows-vec)) 6)
-    (DSL/values (c/into-array Row6 (c/mapv #(apply row %) rows-vec)))
-
-    :else
-    (throw (Exception. "Values don't support the number of fields."))))
+  (values-internal rows-vec))
 
 ;;TODO no need to override clojure, i can have internal names with other names
 ;;extra cost is minimal but maybe i can use a walk in the macro to see which operators the query needs only

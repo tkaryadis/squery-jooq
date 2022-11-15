@@ -102,50 +102,70 @@
 ;;NATURAL: Expressing join predicates implicitly based on an implicit set of shared column names
 ;;       in both tables
 
-(defn- and-internal [cols]
-  (nested2 #(.and (column %1) (column %2)) cols))
+(defn and-internal [cols]
+  (nested2 #(.and (column %1) (column %2))  (if (= (count cols) 1)
+                                              (concat cols [(column true)])
+                                              cols)))
 
 (defn join
   "inner join"
    [df1 df2 & join-conditions-or-fields]
   (if (empty? (filter #(instance? Condition %) join-conditions-or-fields))
     (.using (.join (table df1) (table df2)) (into-array Field (columns join-conditions-or-fields)))
-    (.on (.join (table df1) (table df2)) (and-internal join-conditions-or-fields))))
+    (.on (.join (table df1) (table df2))
+         (if (> (count join-conditions-or-fields) 1)
+           (and-internal join-conditions-or-fields)
+           (first join-conditions-or-fields)))))
 
 (defn left-outer-join
   "keep left always(right null if no join) + right that joined"
   [df1 df2 & join-conditions-or-fields]
   (if (empty? (filter #(instance? Condition %) join-conditions-or-fields))
     (.using (.leftOuterJoin (table df1) (table df2)) (into-array Field (columns join-conditions-or-fields)))
-    (.on (.leftOuterJoin (table df1) (table df2)) (and-internal join-conditions-or-fields))))
+    (.on (.leftOuterJoin (table df1) (table df2))
+         (if (> (count join-conditions-or-fields) 1)
+           (and-internal join-conditions-or-fields)
+           (first join-conditions-or-fields)))))
 
 (defn right-outer-join
   "keep right always(left null if no join) + left that joined"
   [df1 df2 & join-conditions-or-fields]
   (if (empty? (filter #(instance? Condition %) join-conditions-or-fields))
     (.using (.leftOuterJoin (table df1) (table df2)) (into-array Field (columns join-conditions-or-fields)))
-    (.on (.leftOuterJoin (table df1) (table df2)) (and-internal join-conditions-or-fields))))
+    (.on (.leftOuterJoin (table df1) (table df2))
+         (if (> (count join-conditions-or-fields) 1)
+           (and-internal join-conditions-or-fields)
+           (first join-conditions-or-fields)))))
 
 (defn full-join
   "keep both always, null if not join, else join values"
   [df1 df2 & join-conditions-or-fields]
   (if (empty? (filter #(instance? Condition %) join-conditions-or-fields))
     (.using (.fullJoin (table df1) (table df2)) (into-array Field (columns join-conditions-or-fields)))
-    (.on (.fullJoin (table df1) (table df2)) (and-internal join-conditions-or-fields))))
+    (.on (.fullJoin (table df1) (table df2))
+         (if (> (count join-conditions-or-fields) 1)
+           (and-internal join-conditions-or-fields)
+           (first join-conditions-or-fields)))))
 
 (defn left-semi-join
   "keep left that would join, but do not join"
   [df1 df2 & join-conditions-or-fields]
   (if (empty? (filter #(instance? Condition %) join-conditions-or-fields))
     (.using (.leftSemiJoin (table df1) (table df2)) (into-array Field (columns join-conditions-or-fields)))
-    (.on (.leftSemiJoin (table df1) (table df2)) (and-internal join-conditions-or-fields))))
+    (.on (.leftSemiJoin (table df1) (table df2))
+         (if (> (count join-conditions-or-fields) 1)
+           (and-internal join-conditions-or-fields)
+           (first join-conditions-or-fields)))))
 
 (defn left-anti-join
   "keep left that wouldn't join, do not join"
   [df1 df2 & join-conditions-or-fields]
   (if (empty? (filter #(instance? Condition %) join-conditions-or-fields))
     (.using (.leftAntiJoin (table df1) (table df2)) (into-array Field (columns join-conditions-or-fields)))
-    (.on (.leftAntiJoin (table df1) (table df2)) (and-internal join-conditions-or-fields))))
+    (.on (.leftAntiJoin (table df1) (table df2))
+         (if (> (count join-conditions-or-fields) 1)
+           (and-internal join-conditions-or-fields)
+           (first join-conditions-or-fields)))))
 
 (defn cross-join
   "cartesian product"

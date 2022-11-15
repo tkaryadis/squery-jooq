@@ -2,9 +2,9 @@
   (:refer-clojure :only [])
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
-            [squery-jooq.commands :refer [q insert]]
+            [squery-jooq.commands :refer [q pq insert]]
             [squery-jooq.state :refer [connect ctx]]
-            [squery-jooq.printing :refer [print-results print-sql print-json-results]])
+            [squery-jooq.printing :refer [print-results print-sql]])
   (:refer-clojure)
   (:import (org.jooq SQLDialect DSLContext Field Table SelectFieldOrAsterisk)
            (org.jooq.impl DSL)
@@ -14,7 +14,7 @@
          SQLDialect/POSTGRES
          (-> (Settings.) (.withRenderFormatted true)))
 
-(print-results (q :book))
+(pq :book)
 
 ;;create.insertInto(AUTHOR,
 ;AUTHOR.ID, AUTHOR.FIRST_NAME, AUTHOR.LAST_NAME)

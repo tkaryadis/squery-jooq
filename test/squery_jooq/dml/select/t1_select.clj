@@ -2,7 +2,7 @@
   (:refer-clojure :only [])
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
-            [squery-jooq.commands :refer [q]]
+            [squery-jooq.commands :refer [q pq]]
             [squery-jooq.state :refer [connect ctx]]
             [squery-jooq.printing :refer [print-results print-sql ]])
   (:refer-clojure)
@@ -25,13 +25,13 @@
 ;LIMIT 2
 ;OFFSET 1
 
-(print-results (q :author
-                  (join :book (= :author.id :book.author_id))
-                  ((= :book.title "1984") (> :book.published_in 2008))
-                  (group :author.first_name :author.last_name)
-                  ((> (count-acc) 5))
-                  (sort :author.last_name)
-                  (limit 2)
-                  (skip 1)
-                  [:author.first_name :author.last_name (count-acc)]))
+(pq :author
+    (join :book (= :author.id :book.author_id))
+    ((= :book.title "1984") (> :book.published_in 2008))
+    (group :author.first_name :author.last_name)
+    ((> (count-acc) 5))
+    (sort :author.last_name)
+    (limit 2)
+    (skip 1)
+    [:author.first_name :author.last_name (count-acc)])
 
