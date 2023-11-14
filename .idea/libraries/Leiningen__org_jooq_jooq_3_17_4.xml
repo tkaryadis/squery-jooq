@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="Leiningen: org.jooq/jooq:3.17.4">
-    <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jooq/jooq/3.17.4/jooq-3.17.4.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
