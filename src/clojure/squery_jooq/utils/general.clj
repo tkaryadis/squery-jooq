@@ -42,8 +42,7 @@
            nested-f first-value]
       (if (empty? args)
         nested-f
-        (recur (rest args) (f (first args) nested-f))))))
-
+        (recur (rest args) (f nested-f (first args)))))))
 
 (defn nested3 [f args]
   (let [first-value (f (first args) (second args) (nth args 2))
@@ -52,7 +51,7 @@
            nested-f first-value]
       (if (empty? args)
         nested-f
-        (recur (rest (rest args)) (f (first args) (second args) nested-f))))))
+        (recur (rest (rest args)) (f nested-f (first args) (second args)))))))
 
 (defn delete-directory-recursive
   "Recursively delete a directory."

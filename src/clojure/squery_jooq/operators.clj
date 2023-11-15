@@ -6,7 +6,7 @@
                             if-not cond
                             into type cast boolean double int long string? nil? some? true? false? any?
                             string? int? decimal? double? boolean? number? rand
-                            get get-in assoc assoc-in dissoc
+                            get get-in assoc assoc-in dissoc keys vals
                             concat conj contains? range reverse count take subvec empty?
                             fn map filter reduce
                             first second last merge max min
@@ -18,7 +18,7 @@
             [squery-jooq.utils.general :refer [nested2]]
             [squery-jooq.schema :refer [schema-types]])
   (:import (org.jooq.impl DSL)
-           (org.jooq Field SelectField Row1 Row2 Row3 Row6 Row5 Row4)))
+           (org.jooq Field JSONEntry SelectField Row1 Row2 Row3 Row6 Row5 Row4)))
 
 ;;Operators for columns
 
@@ -374,6 +374,9 @@
   ([] (DSL/mode))
   ([col] (DSL/mode (column col))))
 
+(defn multiset [& cols]
+  (DSL/multisetAgg (into-array Field (columns cols))))
+
 ;;percentRank(val(0)).withinGroupOrderBy(BOOK.ID)
 (defn percent-rank
   ([] (DSL/percentRank))
@@ -397,13 +400,98 @@
 (defn sort-group [sort-vec col]
   (.withinGroupOrderBy (column col) (sort-arguments sort-vec)))
 
-;;------------------------------------JSON-Arrays---------------------------
 
-(defn conj-each [col]
+;;-------------------------------------arrays-not-json-arrays---------------
+
+#_(defn array [& cols]
+  (DSL/array (into-array Field (columns cols))))
+
+#_(defn concat [& arrays]
+  (nested2 #(DSL/arrayConcat (column %1) (column %2))
+           arrays))
+
+#_(defn conj-each [col]
   (DSL/arrayAgg (column col)))
 
-(defn conj-each-distinct [col]
+#_(defn conj-each-distinct [col]
   (DSL/arrayAggDistinct (column col)))
+
+#_(defn get [col-array idx]
+  (DSL/arrayGet (column col-array) (if (c/number? idx)
+                                     (c/inc (c/int idx))
+                                     (inc (column idx)))))
+
+;;------------------------------------JSON objects+arrays---------------------------
+
+;;i think its best to use json-arrays only , not arrays
+
+;;insert/remove/replace/set only for mysql? not postgress?
+
+(defn json-array [& fields]
+  (DSL/jsonbArray (into-array Field (columns fields))))
+
+;(nested2 #(.add (column %1) (column %2)) cols)
+#_(DSL/jsonbObject (name k) v)
+(defn json-object [& kvs]
+  (let [kvs (c/reduce  (c/fn [v t]
+                         (c/conj v (.value (DSL/key (c/name (c/first t))) (c/second t))))
+                       []
+                       (c/partition 2 kvs))]
+    (DSL/jsonbObject (into-array JSONEntry kvs))))
+
+
+(defn assoc-insert [col k v]
+  (DSL/jsonbInsert (column col)
+                  (if (c/keyword? k)
+                    (c/str "$." (c/name k))
+                    (c/str "$." k))
+                  (column v)))
+
+(defn assoc-update [col k v]
+  (DSL/jsonbReplace (column col)
+                   (if (c/keyword? k)
+                     (c/str "$." (c/name k))
+                     (c/str "$." k))
+                    (column v)))
+
+(defn assoc [col k v]
+  (DSL/jsonbSet (column col)
+                (if (c/keyword? k)
+                  (c/str "$." (c/name k))
+                  (c/str "$." k))
+                (column v)))
+
+(defn dissoc [col k]
+  (DSL/jsonbRemove (column col)
+                   (if (c/keyword? k)
+                     (c/str "$." (c/name k))
+                     (c/str "$." k))))
+
+(defn get-in
+  ([doc-or-array path-vec]
+   (let [path-str (c/reduce (c/fn [v t]
+                              (c/cond
+
+                                (c/number? t)
+                                (c/str v "[" t "]")
+
+                                (c/keyword? t)
+                                (c/str v "." (c/name t))
+
+                                :else
+                                (c/str v "." t)))
+                            "$"
+                            path-vec)]
+     (DSL/jsonbValue (column doc-or-array) path-str)))
+  ([doc path-vec cast-type]
+   (let [jvalue (get-in doc path-vec)]
+     (cast jvalue cast-type))))
+
+(defn get [doc-or-array k]
+  (get-in doc-or-array [k]))
+
+(defn keys [col]
+  (DSL/jsonKeys (column col)))
 
 (defn conj-each-j [col]
   (DSL/jsonbArrayAgg (column col)))
@@ -414,30 +502,7 @@
 (defn merge-acc [col]
   (DSL/jsonbObjectAgg (column col)))
 
-(defn multiset [& cols]
-  (DSL/multisetAgg (into-array Field (columns cols))))
 
-(defn get [col-array idx]
-  (DSL/arrayGet (column col-array) (if (c/number? idx)
-                                     (c/inc (c/int idx))
-                                     (inc (column idx)))))
-
-(defn get-in-doc
-  ([doc path-vec]
-   (let [path-str (c/reduce (c/fn [v t]
-                              (if (c/number? t)
-                                (c/str v "[" t "]")
-                                (c/str v "." t)))
-                            "$"
-                            path-vec)]
-     (DSL/jsonbValue (column doc) path-str)))
-  ([doc path-vec cast-type]
-   (let [jvalue (get-in-doc doc path-vec)]
-     (cast jvalue cast-type))))
-
-
-(defn array [& cols]
-  (DSL/array (into-array Field (columns cols))))
 
 
 ;;----------------------------Quantifiers-----------------------------------
@@ -684,14 +749,29 @@
     sort-acc squery-jooq.operators/sort-acc
     sort-group  squery-jooq.operators/sort-group
 
-    ;;json-arrays
-    conj-each squery-jooq.operators/conj-each
-    conj-each-distinct squery-jooq.operators/conj-each-distinct
+    ;;arrays-not-json-arrays
+    ;array  squery-jooq.operators/array
+    ;concat squery-jooq.operators/concat
+    ;conj-each squery-jooq.operators/conj-each
+    ;conj-each-distinct squery-jooq.operators/conj-each-distinct
+    ;get  squery-jooq.operators/get
+
+    ;;json-objects and arrays
+    json-array squery-jooq.operators/json-array
+    json-object squery-jooq.operators/json-object
+    assoc  squery-jooq.operators/assoc
+    assoc-insert squery-jooq.operators/assoc-insert
+    assoc-update  squery-jooq.operators/assoc-update
+    dissoc  squery-jooq.operators/dissoc
+    get-in  squery-jooq.operators/get-in
+    get     squery-jooq.operators/get
+    keys squery-jooq.operators/keys
+    ;assoc  squery-jooq.operators/assoc
     conj-each-j squery-jooq.operators/conj-each-j
     conj-each-jb squery-jooq.operators/conj-each-jb
     merge-acc squery-jooq.operators/merge-acc
-    get  squery-jooq.operators/get
-    array  squery-jooq.operators/array
+
+
 
     ;;quantifiers
     ;any squery-jooq.operators/any

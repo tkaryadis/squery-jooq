@@ -10,6 +10,6 @@ pom.xml.asc
 /.nrepl-port
 .hgignore
 .hg/
-/connection-string
+/connection-map
 /TODO
 /notes-books

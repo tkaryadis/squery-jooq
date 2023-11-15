@@ -13,6 +13,11 @@
 
 (declare columns)
 
+(defn as-map? [m]
+  (and (map? m)
+       (= (count m) 1)
+       (qualified-keyword? (first (keys m)))))
+
 ;;TODO make it faster protocol
 ;;A Condition can be turned into a Field<Boolean> using DSL.field
 (defn column
@@ -36,20 +41,23 @@
     (DSL/field (name field))
 
     (vector? field)
-    (DSL/array (into-array Field (columns field)))
+    (DSL/jsonbArray (into-array Field (columns field)))
+    ;(DSL/array (into-array Field (columns field)))
 
+    ;;new column
+    (as-map? field)
+    (let [k (name (first (keys field)))
+          v (column (first (vals field)))]
+      (.as ^Field v k))
+
+    ;;json object
     (map? field)
-    (let [ks (keys field)]
-      (if (and (= (count ks) 1) (keyword? (first ks)))
-        (let [k (name (first ks))
-              v (column (first (vals field)))]
-          (.as ^Field v k))
-        (let [pairs (into [] field)
-              pairs (mapv (fn [p]
+    (let [pairs (into [] field)
+          pairs (mapv (fn [p]
                         (.value (DSL/key (name (first p)))
                                 (column (second p))))
                       pairs)]
-          (DSL/jsonObject (into-array JSONEntry pairs)))))
+      (DSL/jsonObject (into-array JSONEntry pairs)))
 
     :else
     (DSL/val field)))
