@@ -24,7 +24,8 @@
         qforms (doall (concat with-qforms qforms))
         qforms (pipeline qforms)
         query (concat (list '-> '@ctx) qforms)
-        _ (prn "query" query)]
+        _ (prn "query" query)
+        _ (prn "sql" (.getSQL query))]
     `(let ~squery-jooq.operators/operators-mappings
        ~query)))
 
@@ -56,10 +57,10 @@
         qforms (switch-select-from qforms true)
         qforms (doall (concat with-qforms qforms))
         qforms (pipeline qforms)
-        query (concat (list '-> '@ctx) qforms)
-        _ (prn "query" query)
-        ]
+        query (concat (list '-> '@ctx) qforms)]
     `(let ~squery-jooq.operators/operators-mappings
+       (prn "query" ~query)
+       (prn "sql" (.getSQL ~query))
        (squery-jooq.printing/print-results ~query))))
 
 #_(defmacro sq [arg]

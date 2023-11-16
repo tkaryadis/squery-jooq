@@ -5,9 +5,8 @@
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojure/clojure "1.10.0"]
                  [org.jooq/jooq "3.18.7"]
+                 [org.postgresql/postgresql "42.5.0"]
                  [com.mysql/mysql-connector-j "8.2.0"]
-
-                 ;[org.postgresql/postgresql "42.5.0"]
                  [org.flatland/ordered "1.5.9"]]
   :source-paths ["src/clojure"]
   :java-source-paths ["src/java"]

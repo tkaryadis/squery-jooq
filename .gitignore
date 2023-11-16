@@ -11,5 +11,7 @@ pom.xml.asc
 .hgignore
 .hg/
 /connection-map
+/connection-string
 /TODO
 /notes-books
+/which-db

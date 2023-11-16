@@ -349,6 +349,8 @@
   ([] (DSL/count))
   ([col] (DSL/count (column col))))
 
+
+;;TODO mysql not working, but it should 4.11.21.23. GROUP_CONCAT
 (defn str-each
   ([col seperator-str] (DSL/groupConcat (column col) seperator-str))
   ([col] (DSL/groupConcat (column col))))
@@ -400,6 +402,25 @@
 (defn sort-group [sort-vec col]
   (.withinGroupOrderBy (column col) (sort-arguments sort-vec)))
 
+;;------------------------------array-accumulators-------------------------
+
+;;no-mysql,postgress-ok
+(defn conj-each-arr [col]
+    (DSL/arrayAgg (column col)))
+
+;;no-mysql,postgress-ok
+(defn conj-each-distinct-arr [col]
+    (DSL/arrayAggDistinct (column col)))
+
+;;------------------------------json-accumulators--------------------------
+
+;;not working on mysql, postgres is ok
+(defn conj-each [col]
+  (DSL/jsonbArrayAgg (column col)))
+
+;;mysql+postgress ok
+(defn merge-acc [k v]
+  (DSL/jsonbObjectAgg (column k) (column v)))
 
 ;;-------------------------------------arrays-not-json-arrays---------------
 
@@ -410,11 +431,7 @@
   (nested2 #(DSL/arrayConcat (column %1) (column %2))
            arrays))
 
-#_(defn conj-each [col]
-  (DSL/arrayAgg (column col)))
 
-#_(defn conj-each-distinct [col]
-  (DSL/arrayAggDistinct (column col)))
 
 #_(defn get [col-array idx]
   (DSL/arrayGet (column col-array) (if (c/number? idx)
@@ -492,17 +509,6 @@
 
 (defn keys [col]
   (DSL/jsonKeys (column col)))
-
-(defn conj-each-j [col]
-  (DSL/jsonbArrayAgg (column col)))
-
-(defn conj-each-jb [col]
-  (DSL/jsonbArrayAgg (column col)))
-
-(defn merge-acc [col]
-  (DSL/jsonbObjectAgg (column col)))
-
-
 
 
 ;;----------------------------Quantifiers-----------------------------------
@@ -749,6 +755,14 @@
     sort-acc squery-jooq.operators/sort-acc
     sort-group  squery-jooq.operators/sort-group
 
+    ;;accumulators-arrays
+    conj-each-arr squery-jooq.operators/conj-each-arr
+    conj-each-distinct-arr squery-jooq.operators/conj-each-distinct-arr
+
+    ;;accumulators-json
+    conj-each squery-jooq.operators/conj-each
+    merge-acc squery-jooq.operators/merge-acc
+
     ;;arrays-not-json-arrays
     ;array  squery-jooq.operators/array
     ;concat squery-jooq.operators/concat
@@ -766,11 +780,6 @@
     get-in  squery-jooq.operators/get-in
     get     squery-jooq.operators/get
     keys squery-jooq.operators/keys
-    ;assoc  squery-jooq.operators/assoc
-    conj-each-j squery-jooq.operators/conj-each-j
-    conj-each-jb squery-jooq.operators/conj-each-jb
-    merge-acc squery-jooq.operators/merge-acc
-
 
 
     ;;quantifiers
