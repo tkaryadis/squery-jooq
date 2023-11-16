@@ -14,10 +14,11 @@
                             long-array
                             repeat])
   (:require [clojure.core :as c]
-            [squery-jooq.internal.common :refer [column columns sort-arguments values-internal row-internal]]
+            [squery-jooq.internal.common :refer [column columns sort-arguments values-internal row-internal get-field-sql]]
             [squery-jooq.utils.general :refer [nested2]]
-            [squery-jooq.schema :refer [schema-types]])
-  (:import (org.jooq.impl DSL)
+            [squery-jooq.schema :refer [schema-types]]
+            [squery-jooq.state :refer [ctx]])
+  (:import (org.jooq.impl DSL SQLDataType)
            (org.jooq Field JSONEntry SelectField Row1 Row2 Row3 Row6 Row5 Row4)))
 
 ;;Operators for columns
@@ -233,6 +234,9 @@
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 
+(defn type [col]
+  (.getTypeName (.getDataType (column col))))
+
 ;;type predicates
 (defn true? [col]
   (.eq (column col) true))
@@ -288,6 +292,12 @@
   ([col] (.cast (column col) (c/get schema-types :timestamp)))
   #_([col string-format] (functions/to_timestamp (column col) string-format))
   )
+
+(defn string? [col]
+  (.equals (.getDataType (column col)) SQLDataType/VARCHAR))
+
+(defn jsonb? [col]
+  (.equals (.getDataType (column col)) SQLDataType/JSONB))
 
 #_(defn long-array
   ([col] (cast (column col) (array-type :long)))
@@ -424,7 +434,7 @@
 
 ;;-------------------------------------arrays-not-json-arrays---------------
 
-#_(defn array [& cols]
+(defn sql-array [& cols]
   (DSL/array (into-array Field (columns cols))))
 
 #_(defn concat [& arrays]
@@ -456,29 +466,32 @@
                        (c/partition 2 kvs))]
     (DSL/jsonbObject (into-array JSONEntry kvs))))
 
-
-(defn assoc-insert [col k v]
+;;mysql ok, no postgress
+#_(defn assoc-insert [col k v]
   (DSL/jsonbInsert (column col)
                   (if (c/keyword? k)
                     (c/str "$." (c/name k))
                     (c/str "$." k))
                   (column v)))
 
-(defn assoc-update [col k v]
+;;mysql ok, no postgress
+#_(defn assoc-update [col k v]
   (DSL/jsonbReplace (column col)
                    (if (c/keyword? k)
                      (c/str "$." (c/name k))
                      (c/str "$." k))
                     (column v)))
 
-(defn assoc [col k v]
+;;mysql ok, no postgress
+#_(defn assoc [col k v]
   (DSL/jsonbSet (column col)
                 (if (c/keyword? k)
                   (c/str "$." (c/name k))
                   (c/str "$." k))
                 (column v)))
 
-(defn dissoc [col k]
+;;mysql ok , no postgress
+#_(defn dissoc [col k]
   (DSL/jsonbRemove (column col)
                    (if (c/keyword? k)
                      (c/str "$." (c/name k))
@@ -509,6 +522,9 @@
 
 (defn keys [col]
   (DSL/jsonKeys (column col)))
+
+(defn contains? [col k]
+  (not (nil? (get-in col [k]))))
 
 
 ;;----------------------------Quantifiers-----------------------------------
@@ -648,6 +664,40 @@
 (defn values [& rows-vec]
   (values-internal rows-vec))
 
+;;--------------------------json-postgres-only-------------------------
+
+;;from jooq already have
+;;get,get-in,keys,contains?
+
+(defn merge [col-json1 col-json2]
+  (DSL/field (c/str (get-field-sql (column col-json1))
+                    " || "
+                    (get-field-sql (column col-json2)))))
+
+(defn assoc [col-json k v]
+  (merge col-json (DSL/jsonbObject (column k) (column v))))
+
+(defn dissoc [col k]
+  (DSL/field (c/str (get-field-sql (column col))
+                    " - "
+                    (get-field-sql (column k)))))
+
+(defn into [json-type col]
+  (c/cond
+    (c/map? json-type)
+    (DSL/field (c/str " to_jsonb("
+                      (get-field-sql (column col))
+                      ") "))
+    (c/vector? json-type)
+    (DSL/field (c/str " array_to_json("
+                      (get-field-sql (column col))
+                      ") "))))
+
+(defn unwind [col]
+  (DSL/field (c/str " unnest("
+                    (get-field-sql (column col))
+                    ") ")))
+
 ;;TODO no need to override clojure, i can have internal names with other names
 ;;extra cost is minimal but maybe i can use a walk in the macro to see which operators the query needs only
 (def operators-mappings
@@ -700,6 +750,7 @@
     cond squery-jooq.operators/cond
 
     ;;types and covert
+    type squery-jooq.operators/type
     true?  squery-jooq.operators/true?
     false? squery-jooq.operators/false?
     nil?   squery-jooq.operators/nil?
@@ -713,6 +764,7 @@
     double squery-jooq.operators/double
     date   squery-jooq.operators/date
     timestamp  squery-jooq.operators/timestamp
+    string?   squery-jooq.operators/string?
 
     ;;strings
     str squery-jooq.operators/str
@@ -764,7 +816,7 @@
     merge-acc squery-jooq.operators/merge-acc
 
     ;;arrays-not-json-arrays
-    ;array  squery-jooq.operators/array
+    sql-array  squery-jooq.operators/sql-array
     ;concat squery-jooq.operators/concat
     ;conj-each squery-jooq.operators/conj-each
     ;conj-each-distinct squery-jooq.operators/conj-each-distinct
@@ -773,13 +825,10 @@
     ;;json-objects and arrays
     json-array squery-jooq.operators/json-array
     json-object squery-jooq.operators/json-object
-    assoc  squery-jooq.operators/assoc
-    assoc-insert squery-jooq.operators/assoc-insert
-    assoc-update  squery-jooq.operators/assoc-update
-    dissoc  squery-jooq.operators/dissoc
     get-in  squery-jooq.operators/get-in
     get     squery-jooq.operators/get
     keys squery-jooq.operators/keys
+    contains? squery-jooq.operators/contains?
 
 
     ;;quantifiers
@@ -793,6 +842,12 @@
     star   squery-jooq.operators/star
     row    squery-jooq.operators/row
     values squery-jooq.operators/values
+
+    ;;json-postgres-only
+    merge squery-jooq.operators/merge
+    assoc  squery-jooq.operators/assoc
+    dissoc  squery-jooq.operators/dissoc
+    into    squery-jooq.operators/into
 
     ;;stages
     select squery-jooq.stages/select

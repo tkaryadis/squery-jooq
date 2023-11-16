@@ -50,6 +50,8 @@
         ;_ (prn "query" query)
         ]
     `(let ~squery-jooq.operators/operators-mappings
+       (prn "query" ~query)
+       (println "sql" (.getSQL ~query))
        (squery-jooq.printing/print-results ~query))))
 
 (defmacro pq [& qforms]
@@ -60,7 +62,7 @@
         query (concat (list '-> '@ctx) qforms)]
     `(let ~squery-jooq.operators/operators-mappings
        (prn "query" ~query)
-       (prn "sql" (.getSQL ~query))
+       (println "sql" (.getSQL ~query))
        (squery-jooq.printing/print-results ~query))))
 
 #_(defmacro sq [arg]

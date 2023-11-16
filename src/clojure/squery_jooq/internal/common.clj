@@ -1,7 +1,8 @@
 (ns squery-jooq.internal.common
   (:require [squery-jooq.utils.general :refer [keyword-map string-map]]
             clojure.set
-            [clojure.core :as c])
+            [clojure.core :as c]
+            [squery-jooq.state :refer [ctx]])
   (:import (org.jooq.impl DSL)
            (org.jooq Field Table JSONEntry Row Row1 Row2 Row3 Row4 Row5 Row6)))
 
@@ -10,6 +11,19 @@
 ;;  simple literals instead (lit ...)
 ;;the first replaces only keywords
 ;;the second replaces keywords and numbers,strings to (lit  )
+
+(defn get-field-sql [field]
+  (let [query (-> @ctx (.select field))]
+    (loop [sql-string  (.getSQL query)
+           bind-values (.getBindValues query)]
+      (if (c/empty? bind-values)
+        (str " ( " (c/subs sql-string 7) " ) ")
+        (let [cur-bind-value (c/first bind-values)
+              cur-bind-value (if (c/string? cur-bind-value)
+                               (c/str "'" cur-bind-value "'")
+                               cur-bind-value)]
+          (recur (.replaceFirst sql-string "\\?" (String/valueOf cur-bind-value))
+                 (rest bind-values)))))))
 
 (declare columns)
 
@@ -57,7 +71,7 @@
                         (.value (DSL/key (name (first p)))
                                 (column (second p))))
                       pairs)]
-      (DSL/jsonObject (into-array JSONEntry pairs)))
+      (DSL/jsonbObject (into-array JSONEntry pairs)))
 
     :else
     (DSL/val field)))
