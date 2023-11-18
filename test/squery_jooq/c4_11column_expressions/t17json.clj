@@ -63,6 +63,7 @@
 ;;postgres only operators
 (pq [[:t :a :b] [1 2] [3 4]]
     [(merge {:a :a} {:b 2})
+     (concat [1 2 3] [4 5 6])     ;;its just merge, that works with arrays also
      (assoc {:a 20} "b" 2)
      (dissoc {:a 2 :b 4} "a")])
 
@@ -75,7 +76,7 @@
 (pq [[:t :a :b] ["1" 2] ["2" 20]]
     [(merge-acc :a :b)])
 
-(pq [[:t :a :b] [(sql-array 1 2 3) 100] [(sql-array 5 6) 200]]
+(pq [[:t :a :b] [(array 1 2 3) 100] [(array 5 6) 200]]
     [(unwind-array :a) :b])
 
 (pq [[:t :a :b] [[1 2 3] 100] [[5 6] 200]]
@@ -85,8 +86,9 @@
   [(get :a 0)
    (type (get :a 0))
    (map (fn [:x] (+ (long :x) 1)) :a)
-   (filter (fn [:x] (> (long :x) 1)) :a)])
+   (filter (fn [:x] (> (long :x) 1)) :a)
+   (get (filter (fn [:x] (> (long :x) 1)) :a) 0)])
 
 (pq [[:t :a] [[1 2 3]]]
-    [(get :a 0 :long)])
-
+    [(get :a 0 :long)
+     (get-long :a 0)])

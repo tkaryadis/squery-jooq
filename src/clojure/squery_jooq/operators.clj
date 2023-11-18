@@ -7,6 +7,7 @@
                             into type cast boolean double int long string? nil? some? true? false? any?
                             string? int? decimal? double? boolean? number? rand
                             get get-in assoc assoc-in dissoc keys vals
+                            aget array
                             concat conj contains? range reverse count take subvec empty?
                             fn map filter reduce
                             first second last merge max min
@@ -415,11 +416,11 @@
 ;;------------------------------array-accumulators-------------------------
 
 ;;no-mysql,postgress-ok
-(defn conj-each-arr [col]
+(defn aconj-each[col]
     (DSL/arrayAgg (column col)))
 
 ;;no-mysql,postgress-ok
-(defn conj-each-distinct-arr [col]
+(defn aconj-each-distinct [col]
     (DSL/arrayAggDistinct (column col)))
 
 ;;------------------------------json-accumulators--------------------------
@@ -434,26 +435,33 @@
 
 ;;-------------------------------------arrays-not-json-arrays---------------
 
-(defn sql-array [& cols]
+(defn array [& cols]
   (DSL/array (into-array Field (columns cols))))
 
-;;(s [(array-text :a)])
-(defn sql-array-table1 [select]
-  (prn "xxxx" (c/= (c/type select) org.jooq.impl.SelectImpl) select)
-  (DSL/array select))
+(defn qarray [query]
+  (DSL/array query))
 
+(defn acount [col-ar]
+  (DSL/cardinality (column col-ar)))
 
-
-#_(defn concat [& arrays]
+(defn aconcat [& arrays]
   (nested2 #(DSL/arrayConcat (column %1) (column %2))
            arrays))
 
-
-
-#_(defn get [col-array idx]
+(defn aget [col-array idx]
   (DSL/arrayGet (column col-array) (if (c/number? idx)
                                      (c/inc (c/int idx))
                                      (inc (column idx)))))
+
+;;true if common members(not empty intersection)
+(defn aand [col-ar1 col-ar2]
+  (DSL/arrayOverlap (column col-ar1) (column col-ar2)))
+
+(defn aassoc [col-ar idx vl]
+  (DSL/arrayReplace (column col-ar) (+ (column idx) 1) (column vl)))
+
+(defn adissoc [col-ar idx]
+  (DSL/arrayRemove (column col-ar) (+ (column idx) 1)))
 
 ;;------------------------------------JSON objects+arrays---------------------------
 
@@ -530,7 +538,14 @@
   ([doc-or-array k cast-type]
    (get-in doc-or-array [k] cast-type)))
 
-;(defn get-long [])
+(defn get-string [doc-or-array k]
+  (get doc-or-array k :string))
+
+(defn get-long [doc-or-array k]
+  (get doc-or-array k :long))
+
+(defn get-double [doc-or-array k]
+  (get doc-or-array k :double))
 
 (defn keys [col]
   (DSL/jsonbKeys (column col)))
@@ -686,6 +701,9 @@
                     " || "
                     (get-field-sql (column col-json2)))))
 
+(defn concat [col1-json-array col2-json-array]
+  (merge col1-json-array col2-json-array))
+
 (defn assoc [col-json k v]
   (merge col-json (DSL/jsonbObject (column k) (column v))))
 
@@ -732,7 +750,7 @@
                       ") "))
 
     (c/= json-type ["sql"])
-    (DSL/array (-> @ctx (.select (unwind-text (column col)))))
+    (DSL/array (-> @ctx (.select (unwind (column col)))))
 
     (c/vector? json-type)
     (DSL/field (c/str " array_to_json("
@@ -766,11 +784,19 @@
 (defn map [fn-arg col]
   (let [args (c/get fn-arg :args)
         op  (c/get fn-arg :op)]
-    (DSL/array (-> @ctx
-                   (.select [op])
-                   (.from [(unwind-to-table (column col) [:t (c/first args)])])))))
+    (into [] (DSL/array (-> @ctx
+                            (.select [op])
+                            (.from [(unwind-to-table (column col) [:t (c/first args)])]))))))
 
 (defn filter [fn-arg col]
+  (let [args (c/get fn-arg :args)
+        op  (c/get fn-arg :op)]
+    (into [] (DSL/array (-> @ctx
+                            (.select [(column (c/first args))])
+                            (.where [op])
+                            (.from [(unwind-to-table (column col) [:t (c/first args)])]))))))
+
+#_(defn reduce [fn-arg col]
   (let [args (c/get fn-arg :args)
         op  (c/get fn-arg :op)]
     (DSL/array (-> @ctx
@@ -911,25 +937,31 @@
     sort-group  squery-jooq.operators/sort-group
 
     ;;accumulators-arrays
-    conj-each-arr squery-jooq.operators/conj-each-arr
-    conj-each-distinct-arr squery-jooq.operators/conj-each-distinct-arr
+    aconj-each squery-jooq.operators/aconj-each
+    aconj-each-distinct squery-jooq.operators/aconj-each-distinct
 
     ;;accumulators-json
     conj-each squery-jooq.operators/conj-each
     merge-acc squery-jooq.operators/merge-acc
 
     ;;arrays-not-json-arrays
-    sql-array  squery-jooq.operators/sql-array
-    ;concat squery-jooq.operators/concat
-    ;conj-each squery-jooq.operators/conj-each
-    ;conj-each-distinct squery-jooq.operators/conj-each-distinct
-    ;get  squery-jooq.operators/get
+    array  squery-jooq.operators/array
+    qarray squery-jooq.operators/qarray
+    acount squery-jooq.operators/acount
+    aget squery-jooq.operators/aget
+    aand squery-jooq.operators/aand
+    aassoc squery-jooq.operators/aassoc
+    adissoc squery-jooq.operators/adissoc
+    aconcat-arrays squery-jooq.operators/aconcat
 
     ;;json-objects and arrays
     json-array squery-jooq.operators/json-array
     json-object squery-jooq.operators/json-object
     get-in  squery-jooq.operators/get-in
     get     squery-jooq.operators/get
+    get-string squery-jooq.operators/get-string
+    get-long squery-jooq.operators/get-long
+    get-double squery-jooq.operators/get-double
     keys squery-jooq.operators/keys
     contains? squery-jooq.operators/contains?
 
@@ -949,6 +981,7 @@
     ;;json-postgres-only
     count   squery-jooq.operators/count
     merge squery-jooq.operators/merge
+    concat squery-jooq.operators/concat
     assoc  squery-jooq.operators/assoc
     dissoc  squery-jooq.operators/dissoc
     unwind  squery-jooq.operators/unwind
@@ -957,7 +990,7 @@
     fn    squery-jooq.operators/fn
     map    squery-jooq.operators/map
     filter    squery-jooq.operators/filter
-
+    ;reduce    squery-jooq.operators/reduce
 
     ;;stages
     select squery-jooq.stages/select
