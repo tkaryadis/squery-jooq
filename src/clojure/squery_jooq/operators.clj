@@ -573,50 +573,27 @@
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 
-#_(defn re-find? [match-regex-string col]
-  (.rlike (column col) match-regex-string))
-
-#_(defn re-find
-  ([match-regex-string col] (functions/regexp_extract (column col) match-regex-string (c/int 0)))
-  ([match-regex-string col grou-idx-number] (functions/regexp_extract (column col) match-regex-string (c/int grou-idx-number))))
-
-#_(defn concat
-  "works on strings, binary and arrays"
-  [& cols]
-  (DSL/concat (into-array Field (columns cols))))
+;;skipped
+;;   ascii,chr,digits,left/right(they are like substring),TO_HEX,UUID
 
 (defn str
   "concat just for strings"
   [& cols]
   (DSL/concat (into-array Field (columns cols))))
 
-;;array_join(Column column, String delimiter)
-#_(defn join-str
-  ([delimiter-string col] (functions/array_join (column col) delimiter-string))
-  ([col] (functions/array_join (column col) "")))
+(defn count-str [col-str]
+  (DSL/length (column col-str)))
 
-(defn count-str [col]
-  (DSL/length (column col)))
-
-(defn take-str
-  ([start-int len-int col] (DSL/substring (column col) start-int len-int))
-  ([start-int col] (DSL/substring (column col) start-int Integer/MAX_VALUE)))
-
-
-#_(defn replace [col match-col-or-string replacement-col-or-string]
-  (if (c/and (c/string? match-col-or-string) (c/string? replacement-col-or-string))
-    (functions/regexp_replace (column col) match-col-or-string replacement-col-or-string)
-    (functions/regexp_replace (column col) (column match-col-or-string) (column replacement-col-or-string))))
-
-#_(defn split-str
-  ([col pattern-string] (functions/split (column col) pattern-string))
-  ([col pattern-string limit-int] (functions/split (column col) pattern-string limit-int)))
-
-#_(defn substring? [str col]
-  (.contains ^Column (column col) str))
-
-#_(defn capitalize [col]
-  (DSL/initcap (column col)))
+(defn subs
+  ([col-str col-start-index]
+   (DSL/substring (column col-str)
+                  (+ (int (column col-start-index)) (c/int 1))
+                  (int (column Integer/MAX_VALUE))))
+  ([col-str col-start-index col-end-index]
+   (DSL/substring (column col-str)
+                  (+ (int (column col-start-index)) (c/int 1))
+                  (- (+ (int (column col-end-index)) (c/int 1))
+                     (int (column col-start-index))))))
 
 (defn lower-case [col]
   (DSL/lower (column col)))
@@ -649,6 +626,40 @@
 (defn padr [col len-int pad-string]
   (DSL/rpad (column col) (c/int len-int) pad-string))
 
+(defn repeat [col ntimes]
+  (DSL/repeat (column col)
+              (int (column ntimes))))
+
+(defn md5 [col-str]
+  (DSL/md5 (column col-str)))
+
+(defn overlay [col-str1 col-str2 start-index]
+  (DSL/overlay (column col-str1)
+               (column col-str2)
+               (int (+ (column start-index) 1))))
+
+(defn sub-index
+  ([col-str1 col-str2 start-index]
+   (- (DSL/position (column col-str1)
+                    (column col-str2)
+                    (int (+ (column start-index) 1)))
+      1))
+  ([col-str1 col-str2]
+   (sub-index col-str1 col-str2 0)))
+
+(defn reverse [col-str]
+  (DSL/reverse (column col-str)))
+
+(defn space [nspaces]
+  (DSL/space (int (column nspaces))))
+
+(defn split-get [col-str col-split-delimiter col-part-idx]
+  (DSL/splitPart (column col-str)
+                 (column col-split-delimiter)
+                 (int (+ (column col-part-idx) 1))))
+
+(defn to-string [col-str col-format]
+  (DSL/toChar (column col-str) (column col-format)))
 
 (defn translate
   "replaces characters(no need for full match), based on index,
@@ -656,17 +667,33 @@
   [col string-match string-replacement]
   (DSL/translate (column col) string-match string-replacement))
 
-(defn repeat [col ntimes]
-  (DSL/repeat (column col) (c/int ntimes)))
+(defn replace-all [col-str col-str-pattern col-replacement-str]
+  (DSL/regexpReplaceAll (column col-str)
+                        (column (if (instance? java.util.regex.Pattern col-str-pattern)
+                                  (.toString col-str-pattern)
+                                  col-str-pattern))
+                        (column col-replacement-str)))
 
-(defn like [pattern-str col]
-  (.like (column col) pattern-str))
+(defn replace [col-str col-str-pattern col-replacement-str]
+  (DSL/regexpReplaceFirst (column col-str)
+                          (column (if (instance? java.util.regex.Pattern col-str-pattern)
+                                    (.toString col-str-pattern)
+                                    col-str-pattern))
+                          (column col-replacement-str)))
 
-(defn not-like [pattern-str col]
-  (.notLike (column col) pattern-str))
+(defn replace-all-str [col-str col-str-match col-replacement-str]
+  (DSL/replace (column col-str)
+               (column col-str-match)
+               (column col-replacement-str)))
 
-(defn collate [col collation-str]
-  (.collate (column col) collation-str))
+#_(defn like [pattern-str col]
+    (.like (column col) pattern-str))
+
+#_(defn not-like [pattern-str col]
+    (.notLike (column col) pattern-str))
+
+#_(defn collate [col collation-str]
+    (.collate (column col) collation-str))
 
 ;;-----------------------------------subqueries-----------------------------
 
@@ -914,7 +941,7 @@
     ;;strings
     str squery-jooq.operators/str
     count-str squery-jooq.operators/count-str
-    take-str  squery-jooq.operators/take-str
+    subs  squery-jooq.operators/subs
     lower-case squery-jooq.operators/lower-case
     upper-case squery-jooq.operators/upper-case
     =ignore-case squery-jooq.operators/=ignore-case
@@ -925,9 +952,12 @@
     padr   squery-jooq.operators/padr
     translate  squery-jooq.operators/translate
     repeat     squery-jooq.operators/repeat
-    like       squery-jooq.operators/like
-    not-like   squery-jooq.operators/not-like
-    collate    squery-jooq.operators/collate
+    replace-all   squery-jooq.operators/replace-all
+    replace     squery-jooq.operators/replace
+    replace-all-str squery-jooq.operators/replace-all-str
+    ;like       squery-jooq.operators/like
+    ;not-like   squery-jooq.operators/not-like
+    ;collate    squery-jooq.operators/collate
 
 
     ;;accumulators

@@ -6,6 +6,9 @@
 
 (def ctx (atom nil))
 
+;;postgress setting
+;;(-> (Settings.) (.withRenderFormatted true))
+
 ;;expect a string that is a clojure map, with url,username,password
 (defn connect [db-name]
   (cond

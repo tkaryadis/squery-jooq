@@ -1,4 +1,4 @@
-(ns squery-jooq.c4-11column-expressions.t16arrays
+(ns squery-jooq.c4-11column-expressions.t14strings
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
             [squery-jooq.commands :refer [q pq s ps]]
@@ -9,6 +9,7 @@
     (java.sql Timestamp)
     (java.time Instant)
     (java.util Date)
+    (java.util.regex Pattern)
     (org.jooq SQLDialect DSLContext Field Select Table SelectFieldOrAsterisk)
     (org.jooq.impl DSL QOM$Lateral SelectImpl)
     (org.jooq.conf Settings StatementType)))
@@ -16,20 +17,18 @@
 ;(connect "mysql")
 (connect "postgres")
 
-;;arrays all members same type, else i use json-arrays
+(ps [(str "hello" "you" "there")
+     (str "hi" (space 2) "you")
+     (repeat "hello!" 5)])
 
-(ps [(array 1 2 3 4)
-     ;;from table result of subquery
-     (qarray (s [(unwind-array (array 1 2 3 4))]))])
+(ps [(subs "hello" 2)
+     (subs "hello" 0 10)
+     (sub-index "hello" "e")])
 
-(ps [(acount (array 1 2 3))
-     (aget (array 1 2 3) 2)
-     (type (aget (array 1 2 3) 2))])
+(ps [(split-get "hello,,there,,you" ",," 1)
+     (to-string (DSL/date "2000-01-01") "YYYY/MM/DD")])
 
-(ps [(adissoc (array 1 2 3) 2)
-     (aassoc (array 1 2 3) 1 -10)
-     (aconcat (array 1 2 3) (array 4 5 6) (array 7 8))
-     (aand (array 1 2 3) (array 2))])
+(ps [(replace-all "he123le456" #"\d+" "-")
+     (replace "he123le456" #"\d+" "-")
+     (replace-all-str "he123le1234" "123" "-")])
 
-(ps [(amap (fn [:x] (+ :x 1)) (array 1 2 3))
-     (afilter (fn [:x] (> :x 1)) (array 1 2 3))])

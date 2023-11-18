@@ -36,7 +36,8 @@
         qforms (doall (concat with-qforms qforms))
         qforms (pipeline qforms)
         query (concat (list '-> '@ctx) qforms)
-        ;_ (prn "query" query)
+        _ (prn "query" query)
+        _ (prn "sql" (squery-jooq.internal.common/get-sql query))
         ]
     `(let ~squery-jooq.operators/operators-mappings
        ~query)))

@@ -1,4 +1,4 @@
-(ns squery-jooq.c4-11column-expressions.t6to15computed-columns
+(ns squery-jooq.c4-11column-expressions.t6to13various
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
             [squery-jooq.commands :refer [q pq s ps]]
@@ -13,10 +13,7 @@
     (org.jooq.impl DSL)
     (org.jooq.conf Settings StatementType)))
 
-(connect (slurp "/home/white/IdeaProjects/squery/squery-jooq/connection-string")
-         SQLDialect/POSTGRES
-         (-> (Settings.) (.withRenderFormatted true)))
-
+(connect "postgres")
 
 ;;Collations => define the sort order of datatypes like varchar
 
