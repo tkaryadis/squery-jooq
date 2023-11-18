@@ -6,9 +6,7 @@
            (org.jooq.impl DSL SelectImpl)
            (org.jooq SQLDialect DSLContext Field)))
 
-(connect (slurp "/home/white/IdeaProjects/squery-jooq/connection-string")
-         SQLDialect/POSTGRES
-         (-> (Settings.) (.withRenderFormatted true)))
+(connect "postgres")
 
 (def query (-> @ctx
                (.select [(DSL/field "first_name")])

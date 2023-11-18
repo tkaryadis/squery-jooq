@@ -1,4 +1,4 @@
-(ns squery-jooq.dml.insert.t1-insert-values
+(ns squery-jooq.c4_5dml.c4_5_4insert.t1-insert-values
   (:refer-clojure :only [])
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
@@ -10,17 +10,9 @@
            (org.jooq.impl DSL)
            (org.jooq.conf Settings StatementType)))
 
-(connect (slurp "/home/white/IdeaProjects/squery-jooq/connection-string")
-         SQLDialect/POSTGRES
-         (-> (Settings.) (.withRenderFormatted true)))
+(connect "postgres")
 
 (pq :book)
-
-;;create.insertInto(AUTHOR,
-;AUTHOR.ID, AUTHOR.FIRST_NAME, AUTHOR.LAST_NAME)
-;.values(100, "Hermann", "Hesse")
-;.values(101, "Alfred", "Döblin")
-;.execute()
 
 (insert :book
         [:id :author_id :title :published_in :language_id]

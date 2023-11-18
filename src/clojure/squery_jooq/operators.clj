@@ -19,7 +19,7 @@
             [squery-jooq.schema :refer [schema-types]]
             [squery-jooq.state :refer [ctx]])
   (:import (org.jooq.impl DSL SQLDataType)
-           (org.jooq Field JSONEntry SelectField Row1 Row2 Row3 Row6 Row5 Row4)))
+           (org.jooq DSLContext Field JSONEntry SelectField Row1 Row2 Row3 Row6 Row5 Row4)))
 
 ;;Operators for columns
 
@@ -437,6 +437,13 @@
 (defn sql-array [& cols]
   (DSL/array (into-array Field (columns cols))))
 
+;;(s [(array-text :a)])
+(defn sql-array-table1 [select]
+  (prn "xxxx" (c/= (c/type select) org.jooq.impl.SelectImpl) select)
+  (DSL/array select))
+
+
+
 #_(defn concat [& arrays]
   (nested2 #(DSL/arrayConcat (column %1) (column %2))
            arrays))
@@ -517,11 +524,16 @@
    (let [jvalue (get-in doc path-vec)]
      (cast jvalue cast-type))))
 
-(defn get [doc-or-array k]
-  (get-in doc-or-array [k]))
+(defn get
+  ([doc-or-array k]
+   (get-in doc-or-array [k]))
+  ([doc-or-array k cast-type]
+   (get-in doc-or-array [k] cast-type)))
+
+;(defn get-long [])
 
 (defn keys [col]
-  (DSL/jsonKeys (column col)))
+  (DSL/jsonbKeys (column col)))
 
 (defn contains? [col k]
   (not (nil? (get-in col [k]))))
@@ -682,21 +694,112 @@
                     " - "
                     (get-field-sql (column k)))))
 
+;;jsonb_array_elements_text
+(defn unwind-text [col]
+  (DSL/field (c/str " jsonb_array_elements_text("
+                    (get-field-sql (column col))
+                    ") ")))
+
+(defn unwind [col]
+  (DSL/field (c/str " jsonb_array_elements("
+                    (get-field-sql (column col))
+                    ") ")))
+
+(defn unwind-array [col]
+  (DSL/field (c/str " unnest("
+                    (get-field-sql (column col))
+                    ") ")))
+
+(defn unwind-array-to-table [col table-schema]
+  (.as (DSL/table (c/str " unnest("
+                         (get-field-sql (column col))
+                         ") "))
+       (name (c/first table-schema))
+       (into-array String (c/map c/name (c/rest table-schema)))))
+
+(defn unwind-to-table [col table-schema]
+  (.as (DSL/table (c/str " jsonb_array_elements("
+                         (get-field-sql (column col))
+                         ") "))
+       (name (c/first table-schema))
+       (into-array String (c/map c/name (c/rest table-schema)))))
+
 (defn into [json-type col]
   (c/cond
     (c/map? json-type)
     (DSL/field (c/str " to_jsonb("
                       (get-field-sql (column col))
                       ") "))
+
+    (c/= json-type ["sql"])
+    (DSL/array (-> @ctx (.select (unwind-text (column col)))))
+
     (c/vector? json-type)
     (DSL/field (c/str " array_to_json("
                       (get-field-sql (column col))
-                      ") "))))
+                      ") "))
+    ;;shouldnt happen
+    :else
+    (column col)))
 
-(defn unwind [col]
-  (DSL/field (c/str " unnest("
+
+;jsonb_array_length
+(defn count [col]
+  (DSL/field (c/str " jsonb_array_length("
                     (get-field-sql (column col))
                     ") ")))
+
+(defn fn [args op]
+  {:args args
+   :op op})
+
+;;SELECT ARRAY(SELECT x + 1 FROM unnest(ARRAY[1, 2, 3]) AS t(x));
+#_(defn map [fnn-arg col]
+  (let [args (c/get fnn-arg :args)
+        op  (c/get fnn-arg :op)
+        _ (prn "args" args)
+        _ (prn "opppp" op)]
+    (DSL/array (-> @ctx
+                   (.select [(+ (cast (DSL/field (column (c/second args))) (c/first args)) 1)])
+                   (.from [(unwind-to-table (column col) [:t :x])])))))
+
+(defn map [fn-arg col]
+  (let [args (c/get fn-arg :args)
+        op  (c/get fn-arg :op)]
+    (DSL/array (-> @ctx
+                   (.select [op])
+                   (.from [(unwind-to-table (column col) [:t (c/first args)])])))))
+
+(defn filter [fn-arg col]
+  (let [args (c/get fn-arg :args)
+        op  (c/get fn-arg :op)]
+    (DSL/array (-> @ctx
+                   (.select [(column (c/first args))])
+                   (.where [op])
+                   (.from [(unwind-to-table (column col) [:t (c/first args)])])))))
+
+;;reduce
+;;CREATE OR REPLACE FUNCTION array_sum_agg_accumulate(acc integer[], val integer)
+;RETURNS integer[] AS $$
+;BEGIN
+;  RETURN acc || val;
+;END;
+;$$ LANGUAGE plpgsql;
+;
+;CREATE AGGREGATE array_sum_agg(integer) (
+;  sfunc = array_sum_agg_accumulate,
+;  stype = integer[]
+;);
+;
+;-- Example usage to sum elements in an array
+;SELECT array_sum_agg(x) FROM unnest(ARRAY[1, 2, 3]) AS t(x);
+
+
+;;filter
+;;SELECT ARRAY(SELECT x FROM unnest(ARRAY[1, 2, 3, 4, 5]) AS t(x) WHERE x % 2 = 0);
+
+;;map
+;;SELECT ARRAY(SELECT x + 1 FROM unnest(ARRAY[1, 2, 3]) AS t(x));
 
 ;;TODO no need to override clojure, i can have internal names with other names
 ;;extra cost is minimal but maybe i can use a walk in the macro to see which operators the query needs only
@@ -844,10 +947,17 @@
     values squery-jooq.operators/values
 
     ;;json-postgres-only
+    count   squery-jooq.operators/count
     merge squery-jooq.operators/merge
     assoc  squery-jooq.operators/assoc
     dissoc  squery-jooq.operators/dissoc
+    unwind  squery-jooq.operators/unwind
+    unwind-array  squery-jooq.operators/unwind-array
     into    squery-jooq.operators/into
+    fn    squery-jooq.operators/fn
+    map    squery-jooq.operators/map
+    filter    squery-jooq.operators/filter
+
 
     ;;stages
     select squery-jooq.stages/select

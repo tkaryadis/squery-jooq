@@ -9,8 +9,8 @@
     (java.sql Timestamp)
     (java.time Instant)
     (java.util Date)
-    (org.jooq SQLDialect DSLContext Field Table SelectFieldOrAsterisk)
-    (org.jooq.impl DSL QOM$Lateral)
+    (org.jooq SQLDialect DSLContext Field Select Table SelectFieldOrAsterisk)
+    (org.jooq.impl DSL QOM$Lateral SelectImpl)
     (org.jooq.conf Settings StatementType)))
 
 ;(connect "mysql")
@@ -33,7 +33,7 @@
 ;;by default i use json ones, the literal [1 3 6] becomes json-array
 
 ;;json => keyword keys only if size > 1, else string keys works always
-#_(ps [{::a 1}             ;;;qualifies keyword => .as
+(ps [{::a 1}             ;;;qualifies keyword => .as
      {:a 1}            ;;keys can be keywords or strings
      {:a 1 "b" 2}
      [1 2 3]              ;;json-array
@@ -44,12 +44,14 @@
      {:a [{"b" 20} {"b" 30} {"b" 100}]}
      ])
 
-;(ps [(json-array 1 2 3)])
-;(ps [(json-object "a" 1 "b" 2 :c 3)])
+(ps [(json-array 1 2 3)])
+(ps [(json-object "a" 1 "b" 2 :c 3)])
 
-;(ps [(keys {:a 1 :b 2})])
+;;keys => jsonb array
+(ps [(get (keys {:a 1 :b 2}) 0)])
 
-#_(ps [(get [1 2 3] 2)
+;;jsonb arrays don't have a type => i need manual casting
+(ps [(get [1 2 3] 2 :long)
      (get {:a 20} :a)
      (get-in [1 2 3] [2])
      (get-in {"a" [{:b 20} {"b" 30} {"b" 100}]}       ;;get-in
@@ -59,19 +61,32 @@
              :int)])
 
 ;;postgres only operators
-#_(pq [[:t :a :b] [1 2] [3 4]]
+(pq [[:t :a :b] [1 2] [3 4]]
     [(merge {:a :a} {:b 2})
      (assoc {:a 20} "b" 2)
      (dissoc {:a 2 :b 4} "a")])
 
 ;;using the get,get-in of jooq
-#_(ps [(contains? {:a 2} "a")])
+(ps [(contains? {:a 2} "a")])
 
-#_(pq [[:t :a :b] [1 2] [10 20]]
+(pq [[:t :a :b] [1 2] [10 20]]
     [(conj-each :a)])
 
-#_(pq [[:t :a :b] ["1" 2] ["2" 20]]
+(pq [[:t :a :b] ["1" 2] ["2" 20]]
     [(merge-acc :a :b)])
 
 (pq [[:t :a :b] [(sql-array 1 2 3) 100] [(sql-array 5 6) 200]]
+    [(unwind-array :a) :b])
+
+(pq [[:t :a :b] [[1 2 3] 100] [[5 6] 200]]
     [(unwind :a) :b])
+
+(pq [[:t :a] [[1 2 3]]]
+  [(get :a 0)
+   (type (get :a 0))
+   (map (fn [:x] (+ (long :x) 1)) :a)
+   (filter (fn [:x] (> (long :x) 1)) :a)])
+
+(pq [[:t :a] [[1 2 3]]]
+    [(get :a 0 :long)])
+
