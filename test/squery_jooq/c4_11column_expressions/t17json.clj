@@ -76,9 +76,6 @@
 (pq [[:t :a :b] ["1" 2] ["2" 20]]
     [(merge-acc :a :b)])
 
-(pq [[:t :a :b] [(array 1 2 3) 100] [(array 5 6) 200]]
-    [(unwind-array :a) :b])
-
 (pq [[:t :a :b] [[1 2 3] 100] [[5 6] 200]]
     [(unwind :a) :b])
 

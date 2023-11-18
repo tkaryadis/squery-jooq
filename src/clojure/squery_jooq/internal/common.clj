@@ -12,7 +12,7 @@
 ;;the first replaces only keywords
 ;;the second replaces keywords and numbers,strings to (lit  )
 
-(defn get-field-sql [field]
+#_(defn get-field-sql [field]
   (let [query (-> @ctx (.select field))]
     (loop [sql-string  (.getSQL query)
            bind-values (.getBindValues query)]
@@ -24,6 +24,25 @@
                                cur-bind-value)]
           (recur (.replaceFirst sql-string "\\?" (String/valueOf cur-bind-value))
                  (rest bind-values)))))))
+
+(defn get-sql [query]
+  (loop [sql-string  (.getSQL query)
+         bind-values (.getBindValues query)]
+    (if (c/empty? bind-values)
+      sql-string
+      (let [cur-bind-value (c/first bind-values)
+            cur-bind-value (if (c/string? cur-bind-value)
+                             (c/str "'" cur-bind-value "'")
+                             cur-bind-value)
+            cur-bind-value (String/valueOf cur-bind-value)
+            cur-bind-value (.replaceAll cur-bind-value "([\\\\^$|()\\[\\]{}.*+?])" "\\\\$1")]
+        (recur (.replaceFirst sql-string "\\?" cur-bind-value)
+               (rest bind-values))))))
+
+(defn get-field-sql [field]
+  (let [query (-> @ctx (.select field))
+        sql-string (get-sql query)]
+    (str " ( " (c/subs sql-string 7) " ) ")))
 
 (declare columns)
 

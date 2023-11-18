@@ -1,7 +1,7 @@
 (ns squery-jooq.commands
   (:require [squery-jooq.internal.query :refer [pipeline separate-with-forms switch-select-from update-pipeline delete-pipeline]]
             [squery-jooq.state :refer [ctx]]
-            [squery-jooq.internal.common :refer [table columns column]]
+            [squery-jooq.internal.common :refer [table columns column get-sql]]
             squery-jooq.operators))
 
 ;;---------------Query macros----------------------------------------------------------------
@@ -25,7 +25,7 @@
         qforms (pipeline qforms)
         query (concat (list '-> '@ctx) qforms)
         _ (prn "query" query)
-        _ (prn "sql" (.getSQL query))]
+        _ (prn "sql" (squery-jooq.internal.common/get-sql query))]
     `(let ~squery-jooq.operators/operators-mappings
        ~query)))
 
@@ -51,7 +51,7 @@
         ]
     `(let ~squery-jooq.operators/operators-mappings
        (prn "query" ~query)
-       (println "sql" (.getSQL ~query))
+       (println "sql" (squery-jooq.internal.common/get-sql ~query))
        (squery-jooq.printing/print-results ~query))))
 
 (defmacro pq [& qforms]
@@ -62,7 +62,7 @@
         query (concat (list '-> '@ctx) qforms)]
     `(let ~squery-jooq.operators/operators-mappings
        (prn "query" ~query)
-       (println "sql" (.getSQL ~query))
+       (println "sql" (squery-jooq.internal.common/get-sql ~query))
        (squery-jooq.printing/print-results ~query))))
 
 #_(defmacro sq [arg]
