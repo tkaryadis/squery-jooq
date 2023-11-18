@@ -8,6 +8,7 @@
                             string? int? decimal? double? boolean? number? rand
                             get get-in assoc assoc-in dissoc keys vals
                             aget array
+                            amap
                             concat conj contains? range reverse count take subvec empty?
                             fn map filter reduce
                             first second last merge max min
@@ -796,6 +797,21 @@
                             (.where [op])
                             (.from [(unwind-to-table (column col) [:t (c/first args)])]))))))
 
+(defn amap [fn-arg col]
+  (let [args (c/get fn-arg :args)
+        op  (c/get fn-arg :op)]
+    (DSL/array (-> @ctx
+                   (.select [op])
+                   (.from [(unwind-array-to-table (column col) [:t (c/first args)])])))))
+
+(defn afilter [fn-arg col]
+  (let [args (c/get fn-arg :args)
+        op  (c/get fn-arg :op)]
+    (DSL/array (-> @ctx
+                   (.select [(column (c/first args))])
+                   (.where [op])
+                   (.from [(unwind-array-to-table (column col) [:t (c/first args)])])))))
+
 #_(defn reduce [fn-arg col]
   (let [args (c/get fn-arg :args)
         op  (c/get fn-arg :op)]
@@ -990,7 +1006,8 @@
     fn    squery-jooq.operators/fn
     map    squery-jooq.operators/map
     filter    squery-jooq.operators/filter
-    ;reduce    squery-jooq.operators/reduce
+    amap    squery-jooq.operators/amap
+    afilter  squery-jooq.operators/afilter
 
     ;;stages
     select squery-jooq.stages/select
