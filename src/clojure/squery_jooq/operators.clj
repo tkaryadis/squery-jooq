@@ -20,8 +20,8 @@
             [squery-jooq.utils.general :refer [nested2]]
             [squery-jooq.schema :refer [schema-types]]
             [squery-jooq.state :refer [ctx]])
-  (:import (org.jooq.impl DSL SQLDataType)
-           (org.jooq DSLContext Field JSONEntry SelectField Row1 Row2 Row3 Row6 Row5 Row4)))
+  (:import (org.jooq.impl DSL Function SQLDataType)
+           (org.jooq DSLContext Field GroupField JSONEntry OrderedAggregateFunction Param SelectField Row1 Row2 Row3 Row6 Row5 Row4 WindowFinalStep WindowSpecificationRowsStep)))
 
 ;;Operators for columns
 
@@ -335,25 +335,33 @@
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 
-(defn sum [col]
+;;skipped
+;;  all BIT acc
+;;  CUME_DIST
+;;  XMLAGG
+
+(defn sum-acc [col]
   (DSL/sum (column col)))
 
-(defn product [col]
+(defn product-acc [col]
   (DSL/product (column col)))
 
-(defn sum-distinct [col]
+(defn product-acc [col]
+  (DSL/product (column col)))
+
+(defn sum-distinct-acc [col]
   (DSL/sumDistinct (column col)))
 
-(defn avg [col]
+(defn avg-acc [col]
   (DSL/avg (column col)))
 
-(defn max-a [col]
+(defn max-acc [col]
   (DSL/max (column col)))
 
-(defn min-a [col]
+(defn min-acc [col]
   (DSL/min (column col)))
 
-(defn median [col]
+(defn median-acc [col]
   (DSL/median (column col)))
 
 (defn count-acc
@@ -361,8 +369,7 @@
   ([] (DSL/count))
   ([col] (DSL/count (column col))))
 
-
-;;TODO mysql not working, but it should 4.11.21.23. GROUP_CONCAT
+;;there is also the LISTAGG, but looks the same so didnt added
 (defn str-each
   ([col seperator-str] (DSL/groupConcat (column col) seperator-str))
   ([col] (DSL/groupConcat (column col))))
@@ -376,26 +383,37 @@
 (defn rand-acc [col]
   (DSL/anyValue (column col)))
 
-(defn dense-rank
-  ([] (DSL/denseRank))
-  ([& cols] (DSL/denseRank (into-array Field (columns cols)))))
-
-(defn rank
-  ([] (DSL/rank))
-  ([& cols] (DSL/rank (into-array Field (columns cols)))))
-
 (defn mode
   ([] (DSL/mode))
   ([col] (DSL/mode (column col))))
 
-(defn multiset [& cols]
+(defn multiset-acc [& cols]
   (DSL/multisetAgg (into-array Field (columns cols))))
+
+
+;;----------------hypothetical set functions accumulators----------
+
+;;i use those with sort-group  (within group)
+
+;;skipped PERCENTILE_CONT,PERCENTILE_DISC
+
+(defn cume-dist [& cols]
+  (DSL/cumeDist (into-array Field (columns cols))))
+
+;;equals same rank
+(defn dense-rank
+  ([] (DSL/denseRank))
+  ([& cols] (DSL/denseRank (into-array Field (columns cols)))))
+
+;;equal not same rank
+(defn rank
+  ([] (DSL/rank))
+  ([& cols] (DSL/rank (into-array Field (columns cols)))))
 
 ;;percentRank(val(0)).withinGroupOrderBy(BOOK.ID)
 (defn percent-rank
   ([] (DSL/percentRank))
   ([cols] (DSL/percentRank (into-array Field (columns cols)))))
-
 
 ;;-------------------------------accumulators-options-----------------------
 
@@ -411,8 +429,9 @@
 (defn sort-acc [sort-vec col]
   (.orderBy (column col) (sort-arguments sort-vec)))
 
-(defn sort-group [sort-vec col]
-  (.withinGroupOrderBy (column col) (sort-arguments sort-vec)))
+(defn sort-group [sort-vec set-function]
+  (.withinGroupOrderBy ^OrderedAggregateFunction set-function
+                       (sort-arguments sort-vec)))
 
 ;;------------------------------array-accumulators-------------------------
 
@@ -433,6 +452,34 @@
 ;;mysql+postgress ok
 (defn merge-acc [k v]
   (DSL/jsonbObjectAgg (column k) (column v)))
+
+;;----------------------------window-functions------------------------------
+
+(defn ws-sort [sort-vec]
+  (DSL/orderBy (into-array (sort-arguments sort-vec))))
+
+(defn ws-group [& cols]
+  (DSL/partitionBy (into-array Field (columns cols))))
+
+(defn window
+  ([acc-fun window-spec] (.over acc-fun window-spec))
+  ([acc-fun] (.over (column acc-fun))))
+
+;;--------------------------window-accumulators------------------------------
+
+(defn row-number []
+  (DSL/rowNumber))
+
+;;--------------------------window-frame-limit-------------------------------
+
+(defn rows-preceding [wind nrows]
+  (.rowsPreceding wind (c/int nrows)))
+
+(defn range-preceding [wind nrows]
+  (.rangePreceding wind (c/int nrows)))
+
+(defn groups-preceding [wind nrows]
+  (.groupsPreceding wind (c/int nrows)))
 
 ;;-------------------------------------arrays-not-json-arrays---------------
 
@@ -686,14 +733,16 @@
                (column col-str-match)
                (column col-replacement-str)))
 
-#_(defn like [pattern-str col]
-    (.like (column col) pattern-str))
+(defn like
+  "% means any sequence of characters"
+  [pattern-str col]
+  (.like (column col) pattern-str))
 
-#_(defn not-like [pattern-str col]
-    (.notLike (column col) pattern-str))
+(defn not-like [pattern-str col]
+  (.notLike (column col) pattern-str))
 
-#_(defn collate [col collation-str]
-    (.collate (column col) collation-str))
+(defn collate [col collation-str]
+  (.collate (column col) collation-str))
 
 ;;-----------------------------------subqueries-----------------------------
 
@@ -718,6 +767,12 @@
 
 (defn values [& rows-vec]
   (values-internal rows-vec))
+
+(defn ignore-nil [acc-call]
+  (.absentOnNull acc-call))
+
+(defn keep-nil [acc-call]
+  (.nullOnNull acc-call))
 
 ;;--------------------------json-postgres-only-------------------------
 
@@ -839,37 +894,6 @@
                    (.where [op])
                    (.from [(unwind-array-to-table (column col) [:t (c/first args)])])))))
 
-#_(defn reduce [fn-arg col]
-  (let [args (c/get fn-arg :args)
-        op  (c/get fn-arg :op)]
-    (DSL/array (-> @ctx
-                   (.select [(column (c/first args))])
-                   (.where [op])
-                   (.from [(unwind-to-table (column col) [:t (c/first args)])])))))
-
-;;reduce
-;;CREATE OR REPLACE FUNCTION array_sum_agg_accumulate(acc integer[], val integer)
-;RETURNS integer[] AS $$
-;BEGIN
-;  RETURN acc || val;
-;END;
-;$$ LANGUAGE plpgsql;
-;
-;CREATE AGGREGATE array_sum_agg(integer) (
-;  sfunc = array_sum_agg_accumulate,
-;  stype = integer[]
-;);
-;
-;-- Example usage to sum elements in an array
-;SELECT array_sum_agg(x) FROM unnest(ARRAY[1, 2, 3]) AS t(x);
-
-
-;;filter
-;;SELECT ARRAY(SELECT x FROM unnest(ARRAY[1, 2, 3, 4, 5]) AS t(x) WHERE x % 2 = 0);
-
-;;map
-;;SELECT ARRAY(SELECT x + 1 FROM unnest(ARRAY[1, 2, 3]) AS t(x));
-
 ;;TODO no need to override clojure, i can have internal names with other names
 ;;extra cost is minimal but maybe i can use a walk in the macro to see which operators the query needs only
 (def operators-mappings
@@ -950,29 +974,34 @@
     trimr  squery-jooq.operators/trimr
     padl   squery-jooq.operators/padl
     padr   squery-jooq.operators/padr
-    translate  squery-jooq.operators/translate
     repeat     squery-jooq.operators/repeat
+    md5        squery-jooq.operators/md5
+    overlay    squery-jooq.operators/overlay
+    sub-index  squery-jooq.operators/sub-index
+    reverse     squery-jooq.operators/reverse
+    space       squery-jooq.operators/space
+    split-get   squery-jooq.operators/split-get
+    to-string   squery-jooq.operators/to-string
+    translate  squery-jooq.operators/translate
     replace-all   squery-jooq.operators/replace-all
     replace     squery-jooq.operators/replace
     replace-all-str squery-jooq.operators/replace-all-str
-    ;like       squery-jooq.operators/like
-    ;not-like   squery-jooq.operators/not-like
-    ;collate    squery-jooq.operators/collate
-
 
     ;;accumulators
-    sum squery-jooq.operators/sum
-    product squery-jooq.operators/product
-    sum-distinct squery-jooq.operators/sum-distinct
-    avg squery-jooq.operators/avg
-    min-a squery-jooq.operators/min-a
-    max-a squery-jooq.operators/max-a
-    median squery-jooq.operators/median
+    sum-acc squery-jooq.operators/sum-acc
+    product-acc squery-jooq.operators/product-acc
+    sum-distinct-acc squery-jooq.operators/sum-distinct-acc
+    avg-acc squery-jooq.operators/avg-acc
+    min-acc squery-jooq.operators/min-acc
+    max-acc squery-jooq.operators/max-acc
+    median-acc squery-jooq.operators/median-acc
     count-acc  squery-jooq.operators/count-acc
     str-each  squery-jooq.operators/str-each
     rand-acc squery-jooq.operators/rand-acc
+    and-acc  squery-jooq.operators/and-acc
+    or-acc   squery-jooq.operators/or-acc
     mode squery-jooq.operators/mode
-    multiset squery-jooq.operators/multiset
+    multiset-acc squery-jooq.operators/multiset-acc
     percent-rank squery-jooq.operators/percent-rank
 
     ;;accumulators-options

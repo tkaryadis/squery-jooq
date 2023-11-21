@@ -13,31 +13,68 @@
     (org.jooq.impl DSL)
     (org.jooq.conf Settings StatementType)))
 
-(connect "mysql")
-;(connect "postgres")
+;(connect "mysql")
+(connect "postgres")
 
-;;i use group even if empty, to avoid problems
+;;aggregate functions ignores NULL values when they produce 1 value
+;;but not when i collect to arrays(json or normal ones)
 
-(pq :book)
-
-;;picks a random id as value (in mysql group was needed)
-(pq :book
+(pq [[:t :a] [1] [2] [3]]
     (group)
-    [(rand-acc :id)])
+    [(rand-acc :a)  ;;pick any random value from the group
+     (count-acc)])
 
-;;array accumulators
-
-;;Field<Integer> jsonLengthField = field("JSON_LENGTH(json_column)", Integer.class);
-;
-;Result<Record> result = context
-;    .select(jsonLengthField)
-;    .from(table("your_table"))
-;    .fetch();
-
-(pq [[:t :a] [{:a 1 :b 2}] [{:a 2 :b 3 :c 4}]]
-    [(DSL/field "JSON_LENGTH(a)")])
-
-#_(pq :book
+(pq [[:t :a] [1] [2] [3]]
     (group)
-    [(and-acc (< :id 4))
-     (and-acc (< :id 5))])
+    [(avg-acc :a)])
+
+(pq [[:t :a] [1] [2] [3]]
+    (group)
+    [(and-acc (< :a 4))    ;;true if true for all rows
+     (or-acc (> :a 2))])   ;;true if at least for 1 row
+
+;;hypothetical set functions
+
+;;finds the rank of a=3 (lit arg= the value that i want to find its rank)
+(pq [[:t :a] [1] [1] [2] [2] [3] [4]]
+    (group)
+    [(sort-group [:a] (rank (lit 3)))
+     (sort-group [:a] (dense-rank (lit 3)))])
+
+
+;;collect to array, optionally sort also
+(pq [[:t :id :a :b] [1 1 1] [2 1 2] [3 1 0] [4 2 1]]
+    (group :a)
+    [(aconj-each :id)
+     (sort-acc [:!id] (aconj-each :id))
+     ;;json_array
+     (conj-each :a)])
+
+;;arrays keep the nulls, but i can ignore them like bellow
+(pq [[:t :a] [1] [2] [nil] [4]]
+    [(aconj-each :a)
+     ;;the default
+     (keep-nil (conj-each :a))
+     (ignore-nil (conj-each :a))])
+
+;;needs 2 args,key col, value col, collect to map
+;;if same key many times, keeps the last (if not ordered, non determenistic)
+;;key nil => always error
+;;value can be nil, and i can ignore it
+(pq [[:t :a :b] [1 2] [3 nil] [5 6]]
+    [(merge-acc :a :b)
+     (ignore-nil (merge-acc :a :b))])
+
+;;aggregate to string
+(pq [[:t :a :b] [1 2] [3 nil] [5 6]]
+    [(str-each :a)
+     (sort-acc [:!a] (str-each :a))])
+
+(pq [[:t :a :b] [1 2] [3 nil] [5 6]]
+    [(max-acc :a)
+     (min-acc :a)])
+
+;;collect to multi-set, its like array or groups (not only pairs, can be many)
+(pq [[:t :a :b ] [1 2 3] [1 3 4] [2 5 6]]
+    [(multiset-acc :a :b)
+     (type (multiset-acc :a :b))])

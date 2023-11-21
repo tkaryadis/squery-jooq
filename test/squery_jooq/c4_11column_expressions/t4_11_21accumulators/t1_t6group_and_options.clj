@@ -1,4 +1,4 @@
-(ns squery-jooq.c4-11column-expressions.t4-11-21accumulators.t1-t6accumulator-options
+(ns squery-jooq.c4-11column-expressions.t4-11-21accumulators.t1-t6group-and-options
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
             [squery-jooq.commands :refer [q pq s ps]]
@@ -13,8 +13,8 @@
     (org.jooq.impl DSL)
     (org.jooq.conf Settings StatementType)))
 
-(connect "mysql")
-;(connect "postgres")
+;(connect "mysql")
+(connect "postgres")
 
 ;;1)Types of groups
 ;
@@ -40,47 +40,45 @@
 
 (pq :book)
 
-;;-------------------------GROUP+ACTIONS to group(accumulators-options)-------------------------
+;;group here is optional but i added it to be clear
+(pq :book
+    (group)
+    [(count-acc) (sum-acc :id)])
 
-
-;;-----------------GROUP----------------------------------------
-;;create.select(BOOK.AUTHOR_ID, count())
-;.from(BOOK)
-;.groupBy(BOOK.AUTHOR_ID).fetch();
+;;operators in accumulator results
+(pq :book
+    (group)
+    [(+ (count-acc) (sum-acc :id) 1)])
 
 (pq :book
     (group :author_id)
     [:author_id (count-acc)])
 
-;;--------------NO-GROUP---------------------------------------
-;;create.select(count(), sum(BOOK.ID))
-;.from(BOOK).fetch();
+;;----------------------options are applied first on the group, and then the accumulator------------------
 
-(pq :book
-    [(count-acc) (sum :id)])
-
-;;create.select(count().plus(sum(BOOK.ID)).plus(1))
-;.from(BOOK).fetch();
-
-(pq :book
-    [(+ (count-acc) (sum :id) 1)])
+;;TODO make options more squery like
 
 ;;-------------------Distinct---------------------------------
 
 (pq :book
+    (group)
     [
      (count-acc :author_id)
      (count-distinct :author_id)
-     ;(str-each :title ",")             ;;mysql error, postgres ok
-     ;(str-each-distinct :author_id)
+     (str-each :title ",")
+     (str-each-distinct :author_id)
      ])
-
 
 ;;---------------filter----------------------------------------
 
+;;filter on group and then count
+
 (pq :book
+    (group)
     [(count-acc)
+     ;;A any-chars  (just start with A)
      (filter-acc (like "A%" :title) (count-acc))
+     ;;any-chars A any-chars (A in any place)
      (filter-acc (like "%A%" :title) (count-acc))])
 
 
@@ -93,19 +91,26 @@
 
 ;;-----------------------------Sort------------------------------------
 
-(pq :book
-    [(conj-each :id)
-     (sort-acc [:!id] (conj-each :id))])
+;;sort each group and then conj
+;;here i order the accumulator result
 
-;;----------------------------Sort within Group------------------------
+(pq [[:t :id :a :b] [1 1 1] [2 1 2] [3 1 0] [4 2 1]]
+    (group :a)
+    [(aconj-each :id)
+     (sort-acc [:!id] (aconj-each :id))])
 
+;;----------------------------Sort within Group-----------------------
+
+;;here i use order, to calculate a single value (above i kept all the ordered group)
+;;its like ordering the group to use it, to calculate that single value
+
+;;one example is rank, where i need to order the group to find the rank
+;;   for each row inside the group
 
 ;;ordered set aggregate functions
-;;1)Hypothetical set functions: Functions that check for the position of a hypothetical value inside of
-;  an ordered set. These include RANK, DENSE_RANK, PERCENT_RANK, CUME_DIST.
-;2)Inverse distribution functions: Functions calculating a percentile over an ordered set, including
-;  PERCENTILE_CONT, PERCENTILE_DISC, or MODE.
-;3)LISTAGG, which is inconsistently using the WITHIN GROUP
+;;1)RANK, DENSE_RANK, PERCENT_RANK, CUME_DIST.
+;;2)PERCENTILE_CONT, PERCENTILE_DISC, or MODE.
+;;3)LISTAGG (aggregates to a string)
 
 (pq :book
     [(sort-group [:!id] (DSL/percentileCont 0.5))])
