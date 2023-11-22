@@ -11,7 +11,7 @@
 
 ;;q without the enviroment for internal use only, for stages that call subqueries like union
 (defmacro sub-q-internal [& qforms]
-  (let [qforms (switch-select-from qforms true)
+  (let [qforms (switch-select-from qforms true false)
         qforms (pipeline qforms)
         query (concat (list '-> '@ctx) qforms)
         ;_ (prn "query" query)
@@ -24,18 +24,47 @@
         fields (filter (fn [f] (not (or (= f :*) (= f "*")))) fields)
         distinct? (first (filter (fn [f] (= f :distinct)) fields))
         fields (filter (fn [f] (not= f :distinct)) fields)]
-    (if (empty? fields)
-      (if distinct?
-        (.selectDistinct df (into-array SelectFieldOrAsterisk [(DSL/asterisk)]))
-        (.select df (into-array SelectFieldOrAsterisk [(DSL/asterisk)])))
-      (if asterist?
-        (if distinct?
-          (.selectDistinct (.selectDistinct df (into-array SelectFieldOrAsterisk [(DSL/asterisk)])) (columns fields))
-          (.select (.select df (into-array SelectFieldOrAsterisk [(DSL/asterisk)])) (columns fields)))
-        (if distinct?
-          (.selectDistinct df (columns fields))
-          (.select df (columns fields)))))))
+    (cond
+      (and (empty? fields) distinct?)
+      (.selectDistinct df (into-array SelectFieldOrAsterisk [(DSL/asterisk)]))
 
+      (and (empty? fields) (not distinct?))
+      (.select df (into-array SelectFieldOrAsterisk [(DSL/asterisk)]))
+
+      (and asterist? distinct?)
+      (.selectDistinct (.selectDistinct df (into-array SelectFieldOrAsterisk [(DSL/asterisk)])) (columns fields))
+
+      (and asterist? (not distinct?))
+      (.select (.select df (into-array SelectFieldOrAsterisk [(DSL/asterisk)])) (columns fields))
+
+      :else
+      (if distinct?
+        (.selectDistinct df (columns fields))
+        (.select df (columns fields))))))
+
+
+(defn select-nested [fields]
+  (let [asterist? (first (filter (fn [f] (or (= f :*) (= f "*"))) fields))
+        fields (filter (fn [f] (not (or (= f :*) (= f "*")))) fields)
+        distinct? (first (filter (fn [f] (= f :distinct)) fields))
+        fields (filter (fn [f] (not= f :distinct)) fields)]
+    (cond
+      (and (empty? fields) distinct?)
+      (DSL/select (into-array SelectFieldOrAsterisk [(DSL/asterisk)]))
+
+      (and (empty? fields) (not distinct?))
+      (DSL/select (into-array SelectFieldOrAsterisk [(DSL/asterisk)]))
+
+      (and asterist? distinct?)
+      (.selectDistinct (DSL/selectDistinct (into-array SelectFieldOrAsterisk [(DSL/asterisk)])) (columns fields))
+
+      (and asterist? (not distinct?))
+      (.select (DSL/select  (into-array SelectFieldOrAsterisk [(DSL/asterisk)])) (columns fields))
+
+      :else
+      (if distinct?
+        (DSL/selectDistinct  (columns fields))
+        (DSL/select  (columns fields))))))
 
 ;;from args (from can take many args, like many tables etc)
 ;;squery args

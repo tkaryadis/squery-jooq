@@ -16,12 +16,13 @@
                             long-array
                             repeat])
   (:require [clojure.core :as c]
-            [squery-jooq.internal.common :refer [column columns sort-arguments values-internal row-internal get-field-sql]]
+            [squery-jooq.internal.common :refer
+             [column columns cond-column cond-columns sort-arguments values-internal row-internal get-field-sql]]
             [squery-jooq.utils.general :refer [nested2]]
             [squery-jooq.schema :refer [schema-types]]
             [squery-jooq.state :refer [ctx]])
   (:import (org.jooq.impl DSL Function SQLDataType)
-           (org.jooq DSLContext Field GroupField JSONEntry OrderedAggregateFunction Param SelectField Row1 Row2 Row3 Row6 Row5 Row4 WindowFinalStep WindowSpecificationRowsStep)))
+           (org.jooq DSLContext Field GroupField JSONEntry OrderedAggregateFunction Param Select SelectField Row1 Row2 Row3 Row6 Row5 Row4 WindowFinalStep WindowSpecificationRowsStep)))
 
 ;;Operators for columns
 
@@ -127,10 +128,7 @@
 ;;TODO row instead of column like    row(BOOK.AUTHOR_ID, BOOK.TITLE).eq(1, "Animal Farm");
 
 (defn = [col1 col2]
-  (.eq  (column col1) (column col2)))
-
-#_(defn =safe [col1 col2]
-  (.eqNullSafe (column col1) (column col2)))
+  (.eq (column col1) (column col2)))
 
 (defn not= [col1 col2]
   (.ne  (column col1) (column col2)))
@@ -147,28 +145,40 @@
 (defn <= [col1 col2]
   (.le (column col1) (column col2)))
 
+(defn <<
+  "left <= col <= right"
+  [col col1-left col2-right]
+  (.and (.between (column col) (column col1-left)) (column col2-right)))
 
 (defn <>
   "left <= col <= right"
   [col col1-left col2-right]
-  (.and (.between (column col) (column col1-left)) (column col2-right)))
+  (.and (.betweenSymmetric (column col) (column col1-left)) (column col2-right)))
 
 ;;---------------------------Boolean----------------------------------------
 ;;--------------------------------------------------------------------------
 ;;--------------------------------------------------------------------------
 
 (defn and [& cols]
-  (nested2 #(.and (column %1) (column %2))  (if (c/= (c/count cols) 1)
-                                              (c/concat cols [(column true)])
-                                              cols)))
+  (let [cols (cond-columns cols)]
+    (nested2 #(DSL/and %1 %2) (if (c/= (c/count cols) 1)
+                                (c/concat cols [(DSL/and (column true))])
+                                cols))))
 
 (defn or [& cols]
-  (nested2 #(.or (column %1) (column %2)) (if (c/= (c/count cols) 1)
-                                            (c/concat cols [(column false)])
-                                            cols)))
+  (let [cols (cond-columns cols)]
+    (nested2 #(DSL/or %1 %2) (if (c/= (c/count cols) 1)
+                                (c/concat cols [(DSL/and (column true))])
+                                cols))))
+
+(defn xor [& cols]
+  (let [cols (cond-columns cols)]
+    (nested2 #(DSL/xor %1 %2) (if (c/= (c/count cols) 1)
+                               (c/concat cols [(DSL/and (column true))])
+                               cols))))
 
 (defn not [col]
-  (.not (column col)))
+  (DSL/not (cond-column col)))
 
 ;;---------------------------Conditional------------------------------------
 ;;--------------------------------------------------------------------------
@@ -604,12 +614,14 @@
 
 ;;----------------------------Quantifiers-----------------------------------
 
-;;TODO doesn't work on postgres?
+;;TODO fields and sub-query both doesn't work on postgres?
 
-#_(defn any [& fields-or-vec]
-  (if (c/vector? (c/first fields-or-vec))
-    (DSL/all (into-array Field (columns (c/first fields-or-vec))))
-    (DSL/all (into-array Field (columns fields-or-vec)))))
+#_(defn any [sub-query]
+  (DSL/any sub-query)
+
+  #_(if (c/vector? (c/first fields-or-vec))
+    (DSL/any (into-array Field (columns (c/first fields-or-vec))))
+    (DSL/any (into-array Field (columns fields-or-vec)))))
 
 #_(defn all [& fields-or-vec]
   (if (c/vector? (c/first fields-or-vec))

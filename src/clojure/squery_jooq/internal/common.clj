@@ -4,7 +4,7 @@
             [clojure.core :as c]
             [squery-jooq.state :refer [ctx]])
   (:import (org.jooq.impl DSL)
-           (org.jooq Field Table JSONEntry Row Row1 Row2 Row3 Row4 Row5 Row6)))
+           (org.jooq Condition Field Table JSONEntry Row Row1 Row2 Row3 Row4 Row5 Row6)))
 
 ;;the first 2 functions is to use
 ;;  keyword instead(col ...)
@@ -95,8 +95,22 @@
     :else
     (DSL/val field)))
 
+(defn cond-column [field]
+  (let [field (column field)]
+    (if (not (instance? Condition field))
+      (DSL/condition field)
+      field)))
+
 (defn columns [fields]
   (mapv column fields))
+
+(defn cond-columns [fields]
+  (mapv (fn [field]
+          (let [field (column field)]
+            (if (not (instance? Condition field))
+              (DSL/condition field)
+              field)))
+        fields))
 
 (defn row-internal
   ([field] (DSL/row (column field)))

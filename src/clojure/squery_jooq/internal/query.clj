@@ -19,7 +19,7 @@
 ;; ...
 ;; select (optional)
 ;; alias (optional)
-(defn switch-select-from [qforms from-also?]
+(defn switch-select-from [qforms from-also? nested?]
   (let [;;first always the from
         qforms (if from-also?
                  (let [from (first qforms)]
@@ -48,8 +48,14 @@
         ;;last always the select
         qforms (if (vector? (last qforms))
                  (let [last-form (last qforms)]
-                   (concat [`(squery-jooq.stages/select ~last-form)] (butlast qforms)))
-                 (concat [`(squery-jooq.stages/select [])] qforms))
+                   (concat [(if nested?
+                              `(squery-jooq.stages/select-nested ~last-form)
+                              `(squery-jooq.stages/select ~last-form))]
+                           (butlast qforms)))
+                 (concat [(if nested?
+                            `(squery-jooq.stages/select-nested [])
+                            `(squery-jooq.stages/select []))]
+                         qforms))
         qforms (if table-alias
                  (concat qforms [`(.asTable ~table-alias)])
                  qforms)]

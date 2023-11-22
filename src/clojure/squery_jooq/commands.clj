@@ -20,7 +20,7 @@
 ;;returns a org.jooq.impl.SelectImpl
 (defmacro q [& qforms]
   (let [[qforms with-qforms] (separate-with-forms qforms)
-        qforms (switch-select-from qforms true)
+        qforms (switch-select-from qforms true false)
         qforms (doall (concat with-qforms qforms))
         qforms (pipeline qforms)
         query (concat (list '-> '@ctx) qforms)
@@ -32,7 +32,7 @@
 ;;s (without from)
 (defmacro s [& qforms]
   (let [[qforms with-qforms] (separate-with-forms qforms)
-        qforms (switch-select-from qforms false)
+        qforms (switch-select-from qforms false false)
         qforms (doall (concat with-qforms qforms))
         qforms (pipeline qforms)
         query (concat (list '-> '@ctx) qforms)
@@ -42,9 +42,20 @@
     `(let ~squery-jooq.operators/operators-mappings
        ~query)))
 
+(defmacro ss [& qforms]
+  (let [[qforms with-qforms] (separate-with-forms qforms)
+        qforms (switch-select-from qforms false true)
+        qforms (doall (concat with-qforms qforms))
+        qforms (pipeline qforms)
+        query (concat (list '->) qforms)
+        _ (println "query" query)
+        ;_ (prn "sql" (squery-jooq.internal.common/get-sql query))
+        ]
+    query))
+
 (defmacro ps [& qforms]
   (let [[qforms with-qforms] (separate-with-forms qforms)
-        qforms (switch-select-from qforms false)
+        qforms (switch-select-from qforms false false)
         qforms (doall (concat with-qforms qforms))
         qforms (pipeline qforms)
         query (concat (list '-> '@ctx) qforms)
@@ -57,7 +68,7 @@
 
 (defmacro pq [& qforms]
   (let [[qforms with-qforms] (separate-with-forms qforms)
-        qforms (switch-select-from qforms true)
+        qforms (switch-select-from qforms true false)
         qforms (doall (concat with-qforms qforms))
         qforms (pipeline qforms)
         query (concat (list '-> '@ctx) qforms)]
@@ -66,17 +77,7 @@
        (println "sql" (squery-jooq.internal.common/get-sql ~query))
        (squery-jooq.printing/print-results ~query))))
 
-#_(defmacro sq [arg]
-    `(let ~squery-spark.datasets.operators/operators-mappings
-       ~arg))
 
-#_(defmacro sq-> [& args]
-    `(let ~squery-spark.datasets.operators/operators-mappings
-       (-> ~@args)))
-
-#_(defmacro not-sq [arg]
-    `(let ~squery-spark.datasets.operators/core-operators-mappings
-       ~arg))
 
 ;;------------------------Insert------------------------------------------
 
