@@ -4,7 +4,7 @@
             [clojure.core :as c]
             [squery-jooq.state :refer [ctx]])
   (:import (org.jooq.impl DSL)
-           (org.jooq Condition Field Table JSONEntry Row Row1 Row2 Row3 Row4 Row5 Row6)))
+           (org.jooq Condition Field Select Table JSONEntry Row Row1 Row2 Row3 Row4 Row5 Row6)))
 
 ;;the first 2 functions is to use
 ;;  keyword instead(col ...)
@@ -111,6 +111,12 @@
               (DSL/condition field)
               field)))
         fields))
+
+;;arg Select, or [SELECT-arg]
+(defn subquery? [arg]
+  (if (coll? arg)
+    (and (= (count arg) 1) (instance? Select (first arg)))
+    (instance? Select arg)))
 
 (defn row-internal
   ([field] (DSL/row (column field)))

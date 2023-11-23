@@ -9,6 +9,7 @@
                             get get-in assoc assoc-in dissoc keys vals
                             aget array
                             amap
+                            distinct?
                             concat conj contains? range reverse count take subvec empty?
                             fn map filter reduce
                             first second last merge max min
@@ -17,7 +18,7 @@
                             repeat])
   (:require [clojure.core :as c]
             [squery-jooq.internal.common :refer
-             [column columns cond-column cond-columns sort-arguments values-internal row-internal get-field-sql]]
+             [column columns cond-column subquery? cond-columns sort-arguments values-internal row-internal get-field-sql]]
             [squery-jooq.utils.general :refer [nested2]]
             [squery-jooq.schema :refer [schema-types]]
             [squery-jooq.state :refer [ctx]])
@@ -25,6 +26,17 @@
            (org.jooq DSLContext Field GroupField JSONEntry OrderedAggregateFunction Param Select SelectField Row1 Row2 Row3 Row6 Row5 Row4 WindowFinalStep WindowSpecificationRowsStep)))
 
 ;;Operators for columns
+
+;;TODO
+;;many operators accept subqueries also, i need to check the arg type
+;;  before calling, for exaple the in
+;;some operators also take row value expressions, for example nil? row(....)
+
+;;rows
+
+(defn row [& vls]
+  (apply #(DSL/row %) (c/map column vls)))
+
 
 ;;---------------------------Arithmetic-------------------------------------
 ;;--------------------------------------------------------------------------
@@ -110,7 +122,6 @@
     (DSL/least (column (c/first cols))
                (into-array Object (columns (rest cols))))))
 
-
 (defn random "float 0 to 1" [] (DSL/rand))
 
 (defn bucket-width
@@ -129,6 +140,14 @@
 
 (defn = [col1 col2]
   (.eq (column col1) (column col2)))
+
+;;null safe =
+;;[ANY] IS DISTINCT FROM NULL yields TRUE
+;;[ANY] IS NOT DISTINCT FROM NULL yields FALSE
+;;NULL IS DISTINCT FROM NULL yields FALSE
+;;NULL IS NOT DISTINCT FROM NULL yields TRUE
+(defn =safe [col1 col2]
+  (.isNotDistinctFrom ^Field (column col1) (column col2)))
 
 (defn not= [col1 col2]
   (.ne  (column col1) (column col2)))
@@ -154,6 +173,11 @@
   "left <= col <= right"
   [col col1-left col2-right]
   (.and (.betweenSymmetric (column col) (column col1-left)) (column col2-right)))
+
+(defn in [col & col-values]
+  (if (subquery? col-values)
+    (.in ^Field (column col) (c/first col-values))
+    (.in ^Field (column col) (into-array Field (columns col-values)))))
 
 ;;---------------------------Boolean----------------------------------------
 ;;--------------------------------------------------------------------------
@@ -311,6 +335,9 @@
 (defn jsonb? [col]
   (.equals (.getDataType (column col)) SQLDataType/JSONB))
 
+(defn nil? [col]
+  (.isNull (column col)))
+
 #_(defn long-array
   ([col] (cast (column col) (array-type :long)))
   ([] (cast (column []) (array-type :long))))
@@ -322,8 +349,6 @@
 #_(defn date-array
   ([col] (cast (column col) (array-type :date)))
   ([] (cast (column []) (array-type :date))))
-
-
 
 #_(defn col [c]
   (functions/col (if (keyword? c) (name c) c)))
@@ -340,6 +365,15 @@
 
 #_(defn json [col builded-schema]
   (functions/from_json (column col) builded-schema))
+
+;;----------------------------dates-----------------------------------------
+
+(defn current-date []
+  (DSL/currentDate))
+
+;;TODO page 530
+#_(defn overlap? [row-date-range1 row-date-range2]
+  (.overlaps ^Row2 row-date-range1 row-date-range2))
 
 ;;---------------------------Accumulators-----------------------------------
 ;;--------------------------------------------------------------------------
@@ -570,6 +604,8 @@
                      (c/str "$." (c/name k))
                      (c/str "$." k))))
 
+;;TODO for vec(array), path-vec doesnt work for columns only for numbers
+;;for maps columns are ok
 (defn get-in
   ([doc-or-array path-vec]
    (let [path-str (c/reduce (c/fn [v t]
@@ -746,12 +782,18 @@
                (column col-replacement-str)))
 
 (defn like
-  "% means any sequence of characters"
+  "% means any sequence of characters, or zero"
   [pattern-str col]
   (.like (column col) pattern-str))
 
 (defn not-like [pattern-str col]
   (.notLike (column col) pattern-str))
+
+(defn similar
+  "_ single character not zero
+   % multi character or zero"
+  [pattern-str col]
+  (.similarTo (column col) pattern-str))
 
 (defn collate [col collation-str]
   (.collate (column col) collation-str))
@@ -760,6 +802,15 @@
 
 (defn exists? [query]
   (DSL/exists query))
+
+(defn not-exists? [query]
+  (DSL/notExists query))
+
+;;not postgres?
+#_(defn distinct? [& cols]
+  (if (subquery? cols)
+    (DSL/unique (c/first cols))
+    (DSL/unique (into-array Field (columns cols)))))
 
 ;;-----------------------------------various--------------------------------
 
@@ -998,6 +1049,11 @@
     replace-all   squery-jooq.operators/replace-all
     replace     squery-jooq.operators/replace
     replace-all-str squery-jooq.operators/replace-all-str
+
+    ;;subquries
+    exists?  squery-jooq.operators/exists?
+    not-exists? squery-jooq.operators/not-exists?
+    ;distinct?  squery-jooq.operators/distinct?
 
     ;;accumulators
     sum-acc squery-jooq.operators/sum-acc

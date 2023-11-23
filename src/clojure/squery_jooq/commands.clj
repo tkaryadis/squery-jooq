@@ -29,6 +29,16 @@
     `(let ~squery-jooq.operators/operators-mappings
        ~query)))
 
+(defmacro sq [& qforms]
+  (let [[qforms with-qforms] (separate-with-forms qforms)
+        qforms (switch-select-from qforms true true)
+        qforms (doall (concat with-qforms qforms))
+        qforms (pipeline qforms)
+        query (concat (list '->) qforms)
+        ;_ (prn "query" query)
+        ]
+    query))
+
 ;;s (without from)
 (defmacro s [& qforms]
   (let [[qforms with-qforms] (separate-with-forms qforms)
