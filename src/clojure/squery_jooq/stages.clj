@@ -169,10 +169,15 @@
 ;;NATURAL: Expressing join predicates implicitly based on an implicit set of shared column names
 ;;       in both tables
 
+;;APPLY or LATERAL: Ordering the join tree from left to right, allowing the right side to access rows
+;from the left side
+;PARTITION BY on OUTER JOIN: To fill the gaps in a report that uses OUTER JOIN
+
 (defn and-internal [cols]
-  (nested2 #(.and (column %1) (column %2))  (if (= (count cols) 1)
-                                              (concat cols [(column true)])
-                                              cols)))
+  (nested2 #(.and (column %1) (column %2))
+           (if (= (count cols) 1)
+             (concat cols [(column true)])
+             cols)))
 
 (defn join
   "inner join

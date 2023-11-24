@@ -874,10 +874,20 @@
                     (get-field-sql (column col))
                     ") ")))
 
-(defn unwind-array-to-table [col table-schema]
+;;no need jooq supports it
+#_(defn unwind-array-to-table [col table-schema]
   (.as (DSL/table (c/str " unnest("
                          (get-field-sql (column col))
                          ") "))
+       (name (c/first table-schema))
+       (into-array String (c/map c/name (c/rest table-schema)))))
+
+;;array to table, with 1 column the array members
+;;i can use max 2 columns also, it will be the same values in all columns
+(defn unwind-array-to-table [col table-schema]
+  (.as (if (c/> (c/count table-schema) 2)
+         (.withOrdinality (DSL/unnest (column col)))
+         (DSL/unnest (column col)))
        (name (c/first table-schema))
        (into-array String (c/map c/name (c/rest table-schema)))))
 
@@ -956,6 +966,11 @@
                    (.select [(column (c/first args))])
                    (.where [op])
                    (.from [(unwind-array-to-table (column col) [:t (c/first args)])])))))
+
+;;---------------------table-operators
+
+(defn table-range [start end]
+  (DSL/generateSeries (int (column start)) (int (column end))))
 
 ;;TODO no need to override clojure, i can have internal names with other names
 ;;extra cost is minimal but maybe i can use a walk in the macro to see which operators the query needs only

@@ -24,8 +24,9 @@
         qforms (doall (concat with-qforms qforms))
         qforms (pipeline qforms)
         query (concat (list '-> '@ctx) qforms)
-        _ (prn "query" query)
-        _ (prn "sql" (squery-jooq.internal.common/get-sql query))]
+        ;_ (prn "query" query)
+        ;_ (prn "sql" (squery-jooq.internal.common/get-sql query))
+        ]
     `(let ~squery-jooq.operators/operators-mappings
        ~query)))
 
@@ -40,14 +41,15 @@
     query))
 
 ;;s (without from)
+;;TODO see 4.10.15. The DUAL table, how jooq does select without from
 (defmacro s [& qforms]
   (let [[qforms with-qforms] (separate-with-forms qforms)
         qforms (switch-select-from qforms false false)
         qforms (doall (concat with-qforms qforms))
         qforms (pipeline qforms)
         query (concat (list '-> '@ctx) qforms)
-        _ (prn "query" query)
-        _ (prn "sql" (squery-jooq.internal.common/get-sql query))
+        ;_ (prn "query" query)
+        ;_ (prn "sql" (squery-jooq.internal.common/get-sql query))
         ]
     `(let ~squery-jooq.operators/operators-mappings
        ~query)))
