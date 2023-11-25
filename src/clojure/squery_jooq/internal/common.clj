@@ -2,7 +2,8 @@
   (:require [squery-jooq.utils.general :refer [keyword-map string-map]]
             clojure.set
             [clojure.core :as c]
-            [squery-jooq.state :refer [ctx]])
+            [squery-jooq.state :refer [ctx]]
+            [squery-jooq.utils.general :refer [ordered-map]])
   (:import (org.jooq.impl DSL)
            (org.jooq Condition Field Select Table JSONEntry Row Row1 Row2 Row3 Row4 Row5 Row6)))
 
@@ -253,3 +254,20 @@
                       col)]
             col))
         cols))
+
+(defn squery-vector->squery-map
+  "Used in Sort/Project/Index
+   makes the members maps(if they are :k or :!k),and merge all to 1 map
+   squery-vector = [:k1 :!k2 :k3 {:k4 ''}] => {:k1 1 :k2 v :k3 1 {:k4 ''}}
+   Used in sort/project/index etc, in sort v=-1,in project v=0
+   Adds literal,can't be used as normal mongo project {:field 1} means here {:field (literal- 1)}"
+  [fields replace-v]
+  (reduce (fn [m field]
+            (if (keyword? field)
+              (let [arg-name (name field)]
+                (if (clojure.string/starts-with? arg-name "!")
+                  (assoc m (keyword (subs arg-name 1)) replace-v)
+                  (assoc m field 1)))
+              (merge m field)))  ;; if not keyword keep the orinal value
+          (ordered-map)
+          fields))

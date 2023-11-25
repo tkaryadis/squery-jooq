@@ -2,7 +2,8 @@
   (:refer-clojure :only [])
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
-            [squery-jooq.commands :refer [q pq insert]]
+            [squery-jooq.commands.query :refer [q pq]]
+            [squery-jooq.commands.update :refer [insert]]
             [squery-jooq.state :refer [connect ctx]]
             [squery-jooq.printing :refer [print-results print-sql]])
   (:refer-clojure)

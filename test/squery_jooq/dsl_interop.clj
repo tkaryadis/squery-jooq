@@ -1,6 +1,6 @@
 (ns squery-jooq.dsl-interop
   (:require [squery-jooq.stages :refer :all]
-            [squery-jooq.commands :refer [q]]
+            [squery-jooq.query :refer [q]]
             [squery-jooq.state :refer [connect ctx]])
   (:import (java.sql DriverManager)
            (org.jooq.impl DSL SelectImpl)

@@ -1,7 +1,7 @@
 (ns squery-jooq.c4-12conditional-expressions.t1predicates
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
-            [squery-jooq.commands :refer [q sq pq s ss ps]]
+            [squery-jooq.query :refer [q sq pq s ss ps]]
             [squery-jooq.state :refer [connect ctx]]
             [squery-jooq.printing :refer [print-results print-sql ]]
             [clojure.core :as c])

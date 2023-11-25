@@ -1,7 +1,9 @@
-(ns squery-jooq.c4-10table-expressions.t12unesting
+(ns squery-jooq.c4-6ddl.t3create
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
-            [squery-jooq.query :refer [q sq pq s ss ps]]
+            [squery-jooq.commands.query :refer :all]
+            [squery-jooq.commands.update :refer :all]
+            [squery-jooq.commands.admin :refer :all]
             [squery-jooq.state :refer [connect ctx]]
             [squery-jooq.printing :refer [print-results print-sql ]]
             [clojure.core :as c])
@@ -17,15 +19,19 @@
 ;(connect "mysql")
 (connect "postgres")
 
-;;explode array column
-(ps [(unwind-array (array 1 2 3))])
+;;create db
+;(create-database "mydb")
 
-(pq (unwind-array-to-table (array 1 2 3 4) [:t :a]))
-;;repeat the same values in 2 columns, max is 2 columns
-(pq (unwind-array-to-table (array 1 2 3 4) [:t :a :b]))
+(create-indexes :author
+                (index [:first_name :!last_name] {:name "myindex1"})
+                (index [:!first_name] {:name "myindex2" :unique true}))
 
-;;There is for JSON also
-(ps [(unwind [1 2 3])])
-(pq (unwind-to-table [1 2 3 4] [:t :a]))
+;;TODO covering + partial indexes page 176
 
-;;TODO 4.10.13-17 not important
+;;TODO 4.6.3.5. CREATE PROCEDURE
+
+#_(create-schema "new-schema")
+
+;;TODO 4.6.3.7. CREATE SEQUENCE
+
+
