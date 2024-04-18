@@ -1,8 +1,8 @@
-(ns squery-jooq.dml.select.t7-group
+(ns squery-jooq.c4-5dml.c4-5-3select.t7-group
   (:refer-clojure :only [])
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
-            [squery-jooq.query :refer [q pq s ps]]
+            [squery-jooq.commands.query :refer [q pq s ps]]
             [squery-jooq.state :refer [connect ctx]]
             [squery-jooq.printing :refer [print-results print-sql ]])
   (:refer-clojure)
@@ -10,9 +10,7 @@
            (org.jooq.impl DSL)
            (org.jooq.conf Settings StatementType)))
 
-(connect (slurp "/home/white/IdeaProjects/squery/squery-jooq/connection-string")
-         SQLDialect/POSTGRES
-         (-> (Settings.) (.withRenderFormatted true)))
+(connect "postgres")
 
 ;;accumulators are using only in select
 

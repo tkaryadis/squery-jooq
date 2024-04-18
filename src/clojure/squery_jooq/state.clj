@@ -6,6 +6,12 @@
 
 (def ctx (atom nil))
 
+(def connection-map (try (read-string  (slurp "/home/white/IdeaProjects/squery/squery-jooq/authentication/connection-map"))
+                         (catch Exception e {})))
+
+(def connection-string (try (slurp "/home/white/IdeaProjects/squery/squery-jooq/authentication/connection-string")
+                            (catch Exception e "")))
+
 ;;postgress setting
 ;;(-> (Settings.) (.withRenderFormatted true))
 
@@ -14,7 +20,7 @@
   (cond
 
     (= db-name "mysql")
-    (let [connection-map (slurp "/home/white/IdeaProjects/squery/squery-jooq/connection-map")
+    (let [connection-map connection-map
           connection-map (read-string connection-map)
           connection (DriverManager/getConnection (get connection-map "url")
                                                   (get connection-map "username")
@@ -22,6 +28,6 @@
       (reset! ctx (DSL/using connection SQLDialect/MYSQL)))
 
     :else
-    (let [connection-str (slurp "/home/white/IdeaProjects/squery/squery-jooq/connection-string")]
-      (let [connection (DriverManager/getConnection connection-str)]
-        (reset! ctx (DSL/using connection SQLDialect/POSTGRES (-> (Settings.) (.withRenderFormatted true))))))))
+    (let [_ (prn "xxx" connection-string)
+          connection (DriverManager/getConnection connection-string)]
+      (reset! ctx (DSL/using connection SQLDialect/POSTGRES (-> (Settings.) (.withRenderFormatted true)))))))

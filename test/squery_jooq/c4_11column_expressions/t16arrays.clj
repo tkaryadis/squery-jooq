@@ -1,7 +1,8 @@
 (ns squery-jooq.c4-11column-expressions.t16arrays
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
-            [squery-jooq.query :refer [q pq s ps]]
+            [squery-jooq.commands.query :refer [q  pq s ps]]
+            [squery-jooq.commands.update :refer [insert uq dq]]
             [squery-jooq.state :refer [connect ctx]]
             [squery-jooq.printing :refer [print-results print-sql ]])
   (:refer-clojure)

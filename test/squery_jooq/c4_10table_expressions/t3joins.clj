@@ -1,7 +1,7 @@
 (ns squery-jooq.c4-10table-expressions.t3joins
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
-            [squery-jooq.query :refer [q sq pq s ss ps]]
+            [squery-jooq.commands.query :refer [q sq pq s ss ps]]
             [squery-jooq.state :refer [connect ctx]]
             [squery-jooq.printing :refer [print-results print-sql ]]
             [clojure.core :as c])

@@ -1,4 +1,4 @@
-(ns squery-jooq.dml.select.t1-select
+(ns squery-jooq.c4-5dml.c4-5-3select.t1-select
   (:refer-clojure :only [])
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
@@ -10,9 +10,7 @@
            (org.jooq.impl DSL)
            (org.jooq.conf Settings StatementType)))
 
-(connect (slurp "/home/white/IdeaProjects/squery/squery-jooq/connection-string")
-         SQLDialect/POSTGRES
-         (-> (Settings.) (.withRenderFormatted true)))
+(connect "postgres")
 
 ;;args of select are   org.jooq.SelectField
 ;;TODO 4.5.3.1.3. Tables as SelectField

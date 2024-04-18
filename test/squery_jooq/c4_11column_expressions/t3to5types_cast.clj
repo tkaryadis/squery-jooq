@@ -1,7 +1,8 @@
 (ns squery-jooq.c4-11column-expressions.t3to5types-cast
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
-            [squery-jooq.query :refer [q pq s ps]]
+            [squery-jooq.commands.query :refer [q  pq s ps]]
+            [squery-jooq.commands.update :refer [insert uq dq]]
             [squery-jooq.state :refer [connect ctx]]
             [squery-jooq.printing :refer [print-results print-sql ]])
   (:refer-clojure)
@@ -9,9 +10,7 @@
            (org.jooq.impl DSL)
            (org.jooq.conf Settings StatementType)))
 
-(connect (slurp "/home/white/IdeaProjects/squery/squery-jooq/connection-string")
-         SQLDialect/POSTGRES
-         (-> (Settings.) (.withRenderFormatted true)))
+(connect "postgres")
 
 
 ;;there are many for type checks + casting

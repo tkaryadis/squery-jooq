@@ -1,8 +1,8 @@
-(ns squery-jooq.dml.select.t12-limit-skip-t13-withties
+(ns squery-jooq.c4-5dml.c4-5-3select.t12-limit-skip-t13-withties
   (:refer-clojure :only [])
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
-            [squery-jooq.query :refer [q pq s ps]]
+            [squery-jooq.commands.query :refer [q pq s ps]]
             [squery-jooq.state :refer [connect ctx]]
             [squery-jooq.printing :refer [print-results print-sql ]])
   (:refer-clojure)
@@ -10,9 +10,7 @@
            (org.jooq.impl DSL)
            (org.jooq.conf Settings StatementType)))
 
-(connect (slurp "/home/white/IdeaProjects/squery/squery-jooq/connection-string")
-         SQLDialect/POSTGRES
-         (-> (Settings.) (.withRenderFormatted true)))
+(connect "postgres")
 
 (pq [[:t :a] [1] [2] [2] [3] [4] [5]]
     (limit 1))
