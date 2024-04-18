@@ -28,6 +28,5 @@
       (reset! ctx (DSL/using connection SQLDialect/MYSQL)))
 
     :else
-    (let [_ (prn "xxx" connection-string)
-          connection (DriverManager/getConnection connection-string)]
+    (let [connection (DriverManager/getConnection connection-string)]
       (reset! ctx (DSL/using connection SQLDialect/POSTGRES (-> (Settings.) (.withRenderFormatted true)))))))

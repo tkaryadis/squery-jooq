@@ -23,11 +23,11 @@
     <orderEntry type="library" name="Leiningen: io.r2dbc/r2dbc-spi:1.0.0.RELEASE" level="project" />
     <orderEntry type="library" name="Leiningen: nrepl:1.0.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.checkerframework/checker-qual:3.5.0" level="project" />
-    <orderEntry type="library" name="Leiningen: org.clojure/clojure:1.10.0" level="project" />
-    <orderEntry type="library" name="Leiningen: org.clojure/core.specs.alpha:0.2.44" level="project" />
-    <orderEntry type="library" name="Leiningen: org.clojure/spec.alpha:0.2.176" level="project" />
+    <orderEntry type="library" name="Leiningen: org.clojure/clojure:1.11.0" level="project" />
+    <orderEntry type="library" name="Leiningen: org.clojure/core.specs.alpha:0.2.62" level="project" />
+    <orderEntry type="library" name="Leiningen: org.clojure/spec.alpha:0.3.218" level="project" />
     <orderEntry type="library" name="Leiningen: org.flatland/ordered:1.5.9" level="project" />
-    <orderEntry type="library" name="Leiningen: org.jooq/jooq:3.18.7" level="project" />
+    <orderEntry type="library" name="Leiningen: org.jooq/jooq:3.19.7" level="project" />
     <orderEntry type="library" name="Leiningen: org.nrepl/incomplete:0.1.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.postgresql/postgresql:42.5.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.reactivestreams/reactive-streams:1.0.3" level="project" />

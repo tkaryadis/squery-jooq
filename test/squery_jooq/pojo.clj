@@ -1,4 +1,4 @@
-(ns squery-jooq.c4-5dml.c4-5-3select.t2-from
+(ns squery-jooq.pojo
   (:refer-clojure :only [])
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
@@ -15,21 +15,4 @@
 
 (connect "postgres")
 
-(comment
-(pq :author)
-
-(pq {:a :author}
-    [:a.first_name])
-
-(pq [[:t :a :b] [1 2] [3 4]])
-
-(def nested (q :author :authortable))
-(pq nested
-    [:authortable.first_name])
-
-;cartesian
-(pq (from [:book :author]))
-
-;;cartesian alias
-(pq (from [{:b :book} {:a :author}]))
-)
+(mapv #(prn (.toString %)) (.fetchInto (q :book) Book))
