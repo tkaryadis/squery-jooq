@@ -2,7 +2,7 @@
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
             [squery-jooq.commands.query :refer [q sq pq s ss ps]]
-            [squery-jooq.state :refer [connect ctx]]
+            [squery-jooq.state :refer [connect-postgres ctx]]
             [squery-jooq.printing :refer [print-results print-sql ]]
             [clojure.core :as c])
   (:refer-clojure)
@@ -15,7 +15,7 @@
     (org.jooq.conf Settings StatementType)))
 
 ;(connect "mysql")
-(connect "postgres")
+(connect-postgres (slurp "/home/white/IdeaProjects/squery/squery-jooq/authentication/connection-string"))
 
 ;;explode array column
 (ps [(unwind-array (array 1 2 3))])

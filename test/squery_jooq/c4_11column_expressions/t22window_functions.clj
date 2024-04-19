@@ -3,7 +3,7 @@
             [squery-jooq.stages :refer :all]
             [squery-jooq.commands.query :refer [q  pq s ps]]
             [squery-jooq.commands.update :refer [insert uq dq]]
-            [squery-jooq.state :refer [connect ctx]]
+            [squery-jooq.state :refer [connect-postgres ctx]]
             [squery-jooq.printing :refer [print-results print-sql ]])
   (:refer-clojure)
   (:import
@@ -15,7 +15,7 @@
     (org.jooq.conf Settings StatementType)))
 
 ;(connect "mysql")
-(connect "postgres")
+(connect-postgres (slurp "/home/white/IdeaProjects/squery/squery-jooq/authentication/connection-string"))
 
 ;;group no fields => 1 aggregation per table
 ;;group with fields => 1 aggregation per group

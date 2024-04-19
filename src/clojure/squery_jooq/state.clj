@@ -6,27 +6,16 @@
 
 (def ctx (atom nil))
 
-(def connection-map (try (read-string  (slurp "/home/white/IdeaProjects/squery/squery-jooq/authentication/connection-map"))
-                         (catch Exception e {})))
+;;map with url,username,password
+(defn connect-mysql [connection-map]
+  (let [connection-map connection-map
+        connection-map (read-string connection-map)
+        connection (DriverManager/getConnection (get connection-map "url")
+                                                (get connection-map "username")
+                                                (get connection-map "password"))]
+    (reset! ctx (DSL/using connection SQLDialect/MYSQL))))
 
-(def connection-string (try (slurp "/home/white/IdeaProjects/squery/squery-jooq/authentication/connection-string")
-                            (catch Exception e "")))
-
-;;postgress setting
-;;(-> (Settings.) (.withRenderFormatted true))
-
-;;expect a string that is a clojure map, with url,username,password
-(defn connect [db-name]
-  (cond
-
-    (= db-name "mysql")
-    (let [connection-map connection-map
-          connection-map (read-string connection-map)
-          connection (DriverManager/getConnection (get connection-map "url")
-                                                  (get connection-map "username")
-                                                  (get connection-map "password"))]
-      (reset! ctx (DSL/using connection SQLDialect/MYSQL)))
-
-    :else
-    (let [connection (DriverManager/getConnection connection-string)]
-      (reset! ctx (DSL/using connection SQLDialect/POSTGRES (-> (Settings.) (.withRenderFormatted true)))))))
+;;jdbc:postgresql://localhost/mydbname?user=myuser&password=mypass
+(defn connect-postgres [connection-string]
+  (let [connection (DriverManager/getConnection connection-string)]
+    (reset! ctx (DSL/using connection SQLDialect/POSTGRES (-> (Settings.) (.withRenderFormatted true))))))

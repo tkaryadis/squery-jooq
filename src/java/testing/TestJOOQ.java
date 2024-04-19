@@ -1,10 +1,14 @@
-/*
+package testing;
+
 import static org.jooq.SQLDialect.POSTGRES;
 import static org.jooq.impl.DSL.*;
+import static org.jooq.impl.SQLDataType.INTEGER;
+
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.*;
 import org.jooq.util.postgres.PostgresDSL;
+import testing.Book;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -54,6 +58,13 @@ public class TestJOOQ
                     .fetchInto(Book.class);
             r2.stream().forEach(System.out::println);
 
+            create.createTable("table")
+                    .column("column1", INTEGER)
+                    .constraints(
+                            constraint("fk").foreignKey("column1").references("other_table", "other_column1")
+                    )
+                   .execute();
+
 
         }
         catch(Exception e)
@@ -63,5 +74,3 @@ public class TestJOOQ
         }
     }
 }
-
- */

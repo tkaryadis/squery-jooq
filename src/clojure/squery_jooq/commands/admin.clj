@@ -4,6 +4,7 @@
             [squery-jooq.schema :refer [schema-types]]
             [squery-jooq.internal.common :refer [table columns column get-sql
                                                  squery-vector->squery-map]]
+            [squery-jooq.internal.admin :refer [add-table-columns add-table-constraints]]
             [squery-jooq.utils.general :refer [ordered-map]]
             squery-jooq.operators)
   (:import (org.jooq Context DSLContext)
@@ -129,3 +130,181 @@
 
 (defn create-schema [schema-name]
   (.execute (.createSchema @ctx schema-name)))
+
+(defn create-table [table-name cols-or-select & constraints-or-data?]
+  "cols is the schema nested vectors
+   [:col-name  ;;assumes type string and default nil or not
+    ;;type normally a keyword
+    ;;the 3rd is optional for nullable or not
+    ;;if i need more complicated things, instead of keyword-type
+    ;;i give an object like
+    ;;   INTEGER.default_(1)   for default value
+    ;;   INTEGER.identity(true) for identity like AUTOINCREMENT,serial
+    ;;   VARCHAR.generatedAlwaysAs(field(name('interest'), DOUBLE).times(100.0).concat('%'))
+    ;;;  ^ for computed columns
+    [:col-name :type-or-Object :true-or-false-or-optional]]
+
+    constraints
+    many types like
+       primary key
+       foreign key
+       unique column(for candidate keys)
+       check for value and type, for example integer >0
+
+    Call examples(cols)
+    (create-table
+                :mytable
+                [:col1
+                 [:col2 :integer false]]
+                [(DSL/primaryKey (into-array String ['col1']))])
+    (create-table
+              :mytable
+
+              [:col
+               ;;3rd arg is for nil?
+               [:col :type-or-Object :true-or-false-or-optional]]
+
+              [{:primary-key ['col1' 'col2']}      ;;clojure to avoid raw jooq(not yet done)
+               {:unique [['col1' 'col2']]}
+
+               ;;if not map, i can use raw JOOQ
+               ;(DSL/primaryKey (into-array String ['col1' 'col2']))
+               #_(.references (DSL/foreignKey 'col1')
+                            'other-table'
+                            'other-column')
+               ;(DSL/unique (into-array String ['col1' 'col2']))
+               #_(DSL/check (.gt (DSL/field (DSL/name 'col1')
+                                          SQLDataType/INTEGER)
+                               0))
+               ;;constraints can have names also
+               #_(.primaryKey ^ConstraintTypeStep (DSL/constraint 'myConstraint')
+                            (into-array String ['col1']))
+
+               #_(.foreignKey ^ConstraintTypeStep (DSL/constraint 'myConstraint')
+                            (into-array String ['col1']))
+
+               ;;constraint('fk').foreignKey('column1').references('other_table', 'other_column1')
+               ])
+
+      Call examples(select)
+      (create-table :mytable (q ...) true)    true is the default to copy the data also
+      (create-table :mytable (q ...) false)
+      "
+  (if (vector? cols-or-select)
+    (-> ^DSLContext @ctx
+        (.createTable (name table-name))
+        (add-table-columns cols-or-select)
+        (add-table-constraints constraints-or-data?)
+        ;(.getSQL)
+        (.execute)
+        )
+    (let [table (-> ^DSLContext @ctx
+                    (.createTable (name table-name))
+                    (.as cols-or-select))
+          table (if (false? constraints-or-data?)
+                  (.withNoData table)
+                  table)]
+      (.execute table))))
+
+(defn create-temp-table [table-name cols-or-select & constraints-or-data?]
+  (if (vector? cols-or-select)
+    (-> ^DSLContext @ctx
+        (.createTemporaryTable (name table-name))
+        (add-table-columns cols-or-select)
+        (add-table-constraints constraints-or-data?)
+        ;(.getSQL)
+        (.execute)
+        )
+    (let [table (-> ^DSLContext @ctx
+                    (.createTemporaryTable (name table-name))
+                    (.as cols-or-select))
+          table (if (false? constraints-or-data?)
+                  (.withNoData table)
+                  table)]
+      (.execute table))))
+
+(defn drop-database [db-name]
+  (-> ^DSLContext @ctx
+      (.dropDatabase (name db-name))
+      (.execute)))
+
+(defn drop-database-if-exists [db-name]
+  (-> ^DSLContext @ctx
+      (.dropDatabaseIfExists (name db-name))
+      (.execute)))
+
+(defn drop-index [index-name & options]
+  (cond
+    (true? (get options :cascade))
+    (-> ^DSLContext @ctx
+        (.dropIndex (name index-name))
+        (.cascade)
+        (.execute))
+
+    (true? (get options :restrict))
+    (-> ^DSLContext @ctx
+        (.dropIndex (name index-name))
+        (.restrict)
+        (.execute))
+
+    :else
+    (-> ^DSLContext @ctx
+        (.dropIndex (name index-name))
+        (.execute))))
+
+(defn drop-index-if-exists [index-name & options]
+  (cond
+    (true? (get options :cascade))
+    (-> ^DSLContext @ctx
+        (.dropIndexIfExists (name index-name))
+        (.cascade)
+        (.execute))
+
+    (true? (get options :restrict))
+    (-> ^DSLContext @ctx
+        (.dropIndexIfExists (name index-name))
+        (.restrict)
+        (.execute))
+
+    :else
+    (-> ^DSLContext @ctx
+        (.dropIndexIfExists (name index-name))
+        (.execute))))
+
+(defn drop-table [table-name & options]
+  (cond
+    (true? (get options :cascade))
+    (-> ^DSLContext @ctx
+        (.dropTable (name table-name))
+        (.cascade)
+        (.execute))
+
+    (true? (get options :restrict))
+    (-> ^DSLContext @ctx
+        (.dropTable (name table-name))
+        (.restrict)
+        (.execute))
+
+    :else
+    (-> ^DSLContext @ctx
+        (.dropTable (name table-name))
+        (.execute))))
+
+(defn drop-table-if-exists [table-name & options]
+  (cond
+    (true? (get options :cascade))
+    (-> ^DSLContext @ctx
+        (.dropTableIfExists (name table-name))
+        (.cascade)
+        (.execute))
+
+    (true? (get options :restrict))
+    (-> ^DSLContext @ctx
+        (.dropTableIfExists (name table-name))
+        (.restrict)
+        (.execute))
+
+    :else
+    (-> ^DSLContext @ctx
+        (.dropTableIfExists (name table-name))
+        (.execute))))

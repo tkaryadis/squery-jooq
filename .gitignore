@@ -17,3 +17,5 @@ pom.xml.asc
 /which-db
 /notes-books/
 /authentication/
+/.clj-kondo/
+/.lsp/

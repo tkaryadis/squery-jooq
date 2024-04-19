@@ -3,7 +3,7 @@
             [squery-jooq.stages :refer :all]
             [squery-jooq.commands.query :refer [q  pq s ps sq ss]]
             [squery-jooq.commands.update :refer [insert uq dq]]
-            [squery-jooq.state :refer [connect ctx]]
+            [squery-jooq.state :refer [connect-postgres ctx]]
             [squery-jooq.printing :refer [print-results print-sql ]]
             [clojure.core :as c])
   (:refer-clojure)
@@ -16,7 +16,7 @@
     (org.jooq.conf Settings StatementType)))
 
 ;(connect "mysql")
-(connect "postgres")
+(connect-postgres (slurp "/home/white/IdeaProjects/squery/squery-jooq/authentication/connection-string"))
 
 ;;SQL types
 ;;  1 or TRUE

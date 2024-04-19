@@ -3,7 +3,7 @@
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
             [squery-jooq.commands.query :refer [q pq s ps]]
-            [squery-jooq.state :refer [connect ctx]]
+            [squery-jooq.state :refer [connect-postgres ctx]]
             [squery-jooq.printing :refer [print-results print-sql ]])
   (:refer-clojure)
   (:import (com.mysql.cj.xdevapi SelectStatementImpl)
@@ -13,9 +13,9 @@
            (org.jooq.conf Settings StatementType)
            (testing Book)))
 
-(connect "postgres")
 
-(comment
+(connect-postgres (slurp "/home/white/IdeaProjects/squery/squery-jooq/authentication/connection-string"))
+
 (pq :author)
 
 (pq {:a :author}
@@ -32,4 +32,3 @@
 
 ;;cartesian alias
 (pq (from [{:b :book} {:a :author}]))
-)

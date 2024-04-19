@@ -1,12 +1,12 @@
 (ns squery-jooq.dsl-interop
   (:require [squery-jooq.stages :refer :all]
             [squery-jooq.commands.query :refer [q]]
-            [squery-jooq.state :refer [connect ctx]])
+            [squery-jooq.state :refer [connect-postgres ctx]])
   (:import (java.sql DriverManager)
            (org.jooq.impl DSL SelectImpl)
            (org.jooq SQLDialect DSLContext Field)))
 
-(connect "postgres")
+(connect-postgres (slurp "/home/white/IdeaProjects/squery/squery-jooq/authentication/connection-string"))
 
 (def query (-> @ctx
                (.select [(DSL/field "first_name")])

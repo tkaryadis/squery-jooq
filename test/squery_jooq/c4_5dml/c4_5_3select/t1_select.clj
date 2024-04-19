@@ -2,15 +2,15 @@
   (:refer-clojure :only [])
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
-            [squery-jooq.query :refer [q pq s ps]]
-            [squery-jooq.state :refer [connect ctx]]
+            [squery-jooq.commands.query :refer [q pq s ps]]
+            [squery-jooq.state :refer [connect-postgres ctx]]
             [squery-jooq.printing :refer [print-results print-sql ]])
   (:refer-clojure)
   (:import (org.jooq SQLDialect DSLContext Field Table SelectFieldOrAsterisk)
            (org.jooq.impl DSL)
            (org.jooq.conf Settings StatementType)))
 
-(connect "postgres")
+(connect-postgres (slurp "/home/white/IdeaProjects/squery/squery-jooq/authentication/connection-string"))
 
 ;;args of select are   org.jooq.SelectField
 ;;TODO 4.5.3.1.3. Tables as SelectField
