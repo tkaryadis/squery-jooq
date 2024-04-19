@@ -6,6 +6,8 @@ Write SQuery and generate SQL, or send the query directly for execution.
 Clojure is functional general programming language with macros, allowing us to
 create compact DSL's without the need to use extra languages in our code.
 
+** ~40% completed, do not use **
+
 ## Example
 
 **SQuery**
