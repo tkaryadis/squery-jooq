@@ -30,6 +30,7 @@
       [(DSL/primaryKey (into-array String ["id"]))])
     (.blockFirst))
 
+(comment
 (-> (insert-values :temptable [:first :last] [["first1" "last1"] ["first2" "last2"]])
     (.blockFirst))
 
@@ -42,7 +43,16 @@
     (.doOnNext (cfn [x] (prn x)))
     (.blockFirst))
 
+)
+
 (-> (insert-values :temptable [:first :last] [["first5" "last5"]] [:first])
+    (.doOnNext (cfn [x] (prn x)))
+    (.blockFirst))
+
+(-> (insert :temptable
+            [:first :last]
+            [{"first" "first6" "last" "last6"}]
+            [:first])
     (.doOnNext (cfn [x] (prn x)))
     (.blockFirst))
 

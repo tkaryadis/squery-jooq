@@ -14,10 +14,9 @@
 
 (defn insert-values
   ([table-name fields values return-fields]
+   ;(prn "----------" table-name fields values return-fields)
    (let [insert-step (-> @ctx (.insertInto (table (name table-name)) (columns fields)))
-         nvalues (count values)
-         ;_ (prn nvalues)
-         ]
+         nvalues (count values)]
      (loop [values values]
        (if (empty? values)
          (if (empty? return-fields)
@@ -66,12 +65,21 @@
                   (let [first-map (into [] (first fields-values))]
                     (mapv first first-map)))
          values (get-all-values header fields-values)
+         header (mapv keyword header)  ;;to be like insert-values header with keywords
          return-values (insert-values table-name header values return-fields)]
-     (if (empty? return-fields)
-       return-values
-       (mapv (fn [values]
-               (zipmap return-fields values))
-             return-values))))
+     (if @state/reactive?
+       (-> return-values
+           (.map (ffn [rvalues]
+                   (if (empty? return-fields)
+                     rvalues
+                     (mapv (fn [values]
+                             (zipmap return-fields values))
+                           rvalues)))))
+       (if (empty? return-fields)
+         return-values
+         (mapv (fn [values]
+                 (zipmap return-fields values))
+               return-values)))))
   ([table-name header fields-values]
    (insert table-name header fields-values [])))
 
