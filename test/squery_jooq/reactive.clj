@@ -4,17 +4,35 @@
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
             [squery-jooq.commands.query :refer [q pq s ps]]
+            [squery-jooq.commands.update :refer [insert]]
+            [squery-jooq.commands.admin :refer [create-table-if-not-exist drop-table-if-exists]]
             [squery-jooq.state :refer [connect-postgres-reactive ctx]]
             [squery-jooq.printing :refer [print-results print-sql]]
             [squery-jooq.reactor-utils.jooq :refer [flux-records]])
   (:refer-clojure)
-  (:import (reactor.core.publisher Flux)))
+  (:import (org.jooq.impl DSL SQLDataType)
+           (reactor.core.publisher Flux Mono)))
 
 (connect-postgres-reactive
   (read-string
-    (slurp "/home/white/IdeaProjects/squery/squery-jooq-reactive/authentication/reactive")))
+    (slurp "/home/white/IdeaProjects/squery/squery-jooq/authentication/reactive")))
 
-(-> (flux-records (q :author))
+(-> (drop-table-if-exists :temptable)
+    (.blockFirst))
+
+(-> (create-table-if-not-exist
+      :temptable
+      [[:id (-> (SQLDataType/BIGINT)
+                (.nullable false)
+                (.identity true))]
+       :name]
+      [(DSL/primaryKey (into-array String ["id"]))])
+    (.blockFirst))
+
+(-> (insert :temptable [:name] [["takis"] ["kostas"]])
+    (.blockFirst))
+
+(-> (q :temptable)
     (.subscribe (cfn [x] (prn x))))
 
 (.read (System/in))

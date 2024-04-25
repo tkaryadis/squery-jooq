@@ -6,6 +6,7 @@
            (org.jooq SQLDialect)))
 
 (def ctx (atom nil))
+(def reactive? (atom false))
 
 ;;map with url,username,password
 (defn connect-mysql [connection-map]
@@ -28,4 +29,5 @@
                                             (.option ConnectionFactoryOptions/USER (get connection-map "username"))
                                             (.option ConnectionFactoryOptions/PASSWORD (get connection-map "password"))
                                             (.build)))]
-    (reset! ctx (DSL/using connection SQLDialect/POSTGRES (-> (Settings.) (.withRenderFormatted true))))))
+    (reset! ctx (DSL/using connection SQLDialect/POSTGRES (-> (Settings.) (.withRenderFormatted true))))
+    (reset! reactive? true)))

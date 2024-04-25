@@ -1,8 +1,12 @@
 (ns squery-jooq.commands.query
+  (:use squery-jooq.reactor-utils.functional-interfaces)
   (:require [squery-jooq.internal.query :refer [pipeline separate-with-forms switch-select-from update-pipeline delete-pipeline]]
+            [squery-jooq.state :as state]
             [squery-jooq.state :refer [ctx]]
             [squery-jooq.internal.common :refer [table columns column get-sql]]
-            squery-jooq.operators))
+            squery-jooq.reactor-utils.jooq
+            squery-jooq.operators)
+  (:import (reactor.core.publisher Flux)))
 
 ;;---------------Query macros----------------------------------------------------------------
 
@@ -23,7 +27,9 @@
         qforms (switch-select-from qforms true false)
         qforms (doall (concat with-qforms qforms))
         qforms (pipeline qforms)
-        query (concat (list '-> '@ctx) qforms)
+        query (if @state/reactive?
+                (concat (list '-> '@ctx) qforms [`(squery-jooq.reactor-utils.jooq/flux-records)])
+                (concat (list '-> '@ctx) qforms))
         ;_ (prn "query" query)
         ;_ (prn "sql" (squery-jooq.internal.common/get-sql query))
         ]
@@ -35,7 +41,9 @@
         qforms (switch-select-from qforms true true)
         qforms (doall (concat with-qforms qforms))
         qforms (pipeline qforms)
-        query (concat (list '->) qforms)
+        query (if @state/reactive?
+                (concat (list '->) qforms [`(squery-jooq.reactor-utils.jooq/flux-records)])
+                (concat (list '->) qforms))
         ;_ (prn "query" query)
         ]
     query))
@@ -47,7 +55,9 @@
         qforms (switch-select-from qforms false false)
         qforms (doall (concat with-qforms qforms))
         qforms (pipeline qforms)
-        query (concat (list '-> '@ctx) qforms)
+        query (if @state/reactive?
+                (concat (list '-> '@ctx) qforms [`(squery-jooq.reactor-utils.jooq/flux-records)])
+                (concat (list '-> '@ctx) qforms))
         ;_ (prn "query" query)
         ;_ (prn "sql" (squery-jooq.internal.common/get-sql query))
         ]
@@ -59,8 +69,10 @@
         qforms (switch-select-from qforms false true)
         qforms (doall (concat with-qforms qforms))
         qforms (pipeline qforms)
-        query (concat (list '->) qforms)
-        _ (println "query" query)
+        query (if @state/reactive?
+                (concat (list '->) qforms [`(squery-jooq.reactor-utils.jooq/flux-records)])
+                (concat (list '->) qforms))
+        ;_ (println "query" query)
         ;_ (prn "sql" (squery-jooq.internal.common/get-sql query))
         ]
     query))
@@ -74,7 +86,7 @@
         ;_ (prn "query" query)
         ]
     `(let ~squery-jooq.operators/operators-mappings
-       (prn "query" ~query)
+       ;(prn "query" ~query)
        (println "sql" (squery-jooq.internal.common/get-sql ~query))
        (squery-jooq.printing/print-results ~query))))
 
@@ -85,6 +97,6 @@
         qforms (pipeline qforms)
         query (concat (list '-> '@ctx) qforms)]
     `(let ~squery-jooq.operators/operators-mappings
-       (prn "query" ~query)
+       ;(prn "query" ~query)
        (println "sql" (squery-jooq.internal.common/get-sql ~query))
        (squery-jooq.printing/print-results ~query))))
