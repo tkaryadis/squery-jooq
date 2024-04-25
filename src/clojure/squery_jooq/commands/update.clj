@@ -61,7 +61,7 @@
 (defn insert
   ([table-name header fields-values return-fields]
    (let [header (if (or (= header [:*]) (= header []))
-                  header
+                  []
                   (let [first-map (into [] (first fields-values))]
                     (mapv first first-map)))
          values (get-all-values header fields-values)

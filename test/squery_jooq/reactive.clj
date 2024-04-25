@@ -49,11 +49,20 @@
     (.doOnNext (cfn [x] (prn x)))
     (.blockFirst))
 
+
 (-> (insert :temptable
             [:first :last]
-            [{"first" "first6" "last" "last6"}]
+            [{"first" "first6" "last" "last6"}])
+    (.doOnNext (cfn [x] (prn x)))
+    (.blockFirst))
+
+#_(-> (insert :temptable
+            [:first :last]
+            [{"first" "first7" "last" "last7"}]
             [:first])
     (.doOnNext (cfn [x] (prn x)))
     (.blockFirst))
+
+
 
 (.read (System/in))
