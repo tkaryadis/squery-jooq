@@ -233,78 +233,90 @@
       (.dropDatabaseIfExists (name db-name))
       (.execute)))
 
-(defn drop-index [index-name & options]
-  (cond
-    (true? (get options :cascade))
-    (-> ^DSLContext @ctx
-        (.dropIndex (name index-name))
-        (.cascade)
-        (.execute))
+(defn drop-index
+  ([index-name options]
+   (cond
+     (true? (get options :cascade))
+     (-> ^DSLContext @ctx
+         (.dropIndex (name index-name))
+         (.cascade)
+         (.execute))
 
-    (true? (get options :restrict))
-    (-> ^DSLContext @ctx
-        (.dropIndex (name index-name))
-        (.restrict)
-        (.execute))
+     (true? (get options :restrict))
+     (-> ^DSLContext @ctx
+         (.dropIndex (name index-name))
+         (.restrict)
+         (.execute))
 
-    :else
-    (-> ^DSLContext @ctx
-        (.dropIndex (name index-name))
-        (.execute))))
+     :else
+     (-> ^DSLContext @ctx
+         (.dropIndex (name index-name))
+         (.execute))))
+  ([index-name]
+   (drop-index index-name)))
 
-(defn drop-index-if-exists [index-name & options]
-  (cond
-    (true? (get options :cascade))
-    (-> ^DSLContext @ctx
-        (.dropIndexIfExists (name index-name))
-        (.cascade)
-        (.execute))
+(defn drop-index-if-exists
+  ([index-name options]
+   (cond
+     (true? (get options :cascade))
+     (-> ^DSLContext @ctx
+         (.dropIndexIfExists (name index-name))
+         (.cascade)
+         (.execute))
 
-    (true? (get options :restrict))
-    (-> ^DSLContext @ctx
-        (.dropIndexIfExists (name index-name))
-        (.restrict)
-        (.execute))
+     (true? (get options :restrict))
+     (-> ^DSLContext @ctx
+         (.dropIndexIfExists (name index-name))
+         (.restrict)
+         (.execute))
 
-    :else
-    (-> ^DSLContext @ctx
-        (.dropIndexIfExists (name index-name))
-        (.execute))))
+     :else
+     (-> ^DSLContext @ctx
+         (.dropIndexIfExists (name index-name))
+         (.execute))))
+  ([index-name]
+   (drop-index-if-exists index-name {})))
 
-(defn drop-table [table-name & options]
-  (cond
-    (true? (get options :cascade))
-    (-> ^DSLContext @ctx
-        (.dropTable (name table-name))
-        (.cascade)
-        (.execute))
+(defn drop-table
+  ([table-name options]
+   (cond
+     (true? (get options :cascade))
+     (-> ^DSLContext @ctx
+         (.dropTable (name table-name))
+         (.cascade)
+         (.execute))
 
-    (true? (get options :restrict))
-    (-> ^DSLContext @ctx
-        (.dropTable (name table-name))
-        (.restrict)
-        (.execute))
+     (true? (get options :restrict))
+     (-> ^DSLContext @ctx
+         (.dropTable (name table-name))
+         (.restrict)
+         (.execute))
 
-    :else
-    (-> ^DSLContext @ctx
-        (.dropTable (name table-name))
-        (.execute))))
+     :else
+     (-> ^DSLContext @ctx
+         (.dropTable (name table-name))
+         (.execute)))
+   ([table-name]
+    (drop-table table-name {}))))
 
-(defn drop-table-if-exists [table-name & options]
-  (cond
-    (true? (get options :cascade))
-    (-> ^DSLContext @ctx
-        (.dropTableIfExists (name table-name))
-        (.cascade)
-        (.execute))
+(defn drop-table-if-exists
+  ([table-name options]
+   (cond
+     (true? (get options :cascade))
+     (-> ^DSLContext @ctx
+         (.dropTableIfExists (name table-name))
+         (.cascade)
+         (.execute))
 
-    (true? (get options :restrict))
-    (-> ^DSLContext @ctx
-        (.dropTableIfExists (name table-name))
-        (.restrict)
-        (.execute))
+     (true? (get options :restrict))
+     (-> ^DSLContext @ctx
+         (.dropTableIfExists (name table-name))
+         (.restrict)
+         (.execute))
 
-    :else
-    (-> ^DSLContext @ctx
-        (.dropTableIfExists (name table-name))
-        (.execute))))
+     :else
+     (-> ^DSLContext @ctx
+         (.dropTableIfExists (name table-name))
+         (.execute))))
+  ([table-name]
+   (drop-table-if-exists table-name {})))

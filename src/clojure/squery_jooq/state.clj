@@ -1,5 +1,6 @@
 (ns squery-jooq.state
-  (:import (java.sql DriverManager)
+  (:import (io.r2dbc.spi ConnectionFactories ConnectionFactory ConnectionFactoryOptions)
+           (java.sql DriverManager)
            (org.jooq.conf Settings)
            (org.jooq.impl DSL)
            (org.jooq SQLDialect)))
@@ -18,4 +19,13 @@
 ;;jdbc:postgresql://localhost/mydbname?user=myuser&password=mypass
 (defn connect-postgres [connection-string]
   (let [connection (DriverManager/getConnection connection-string)]
+    (reset! ctx (DSL/using connection SQLDialect/POSTGRES (-> (Settings.) (.withRenderFormatted true))))))
+
+(defn connect-postgres-reactive [connection-map]
+  (let [connection ^ConnectionFactory (ConnectionFactories/get
+                                        (-> (ConnectionFactoryOptions/parse (get connection-map "url"))
+                                            (.mutate)
+                                            (.option ConnectionFactoryOptions/USER (get connection-map "username"))
+                                            (.option ConnectionFactoryOptions/PASSWORD (get connection-map "password"))
+                                            (.build)))]
     (reset! ctx (DSL/using connection SQLDialect/POSTGRES (-> (Settings.) (.withRenderFormatted true))))))

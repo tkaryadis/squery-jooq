@@ -66,6 +66,14 @@ public class TestJOOQ
                    .execute();
 
 
+            /*
+            create.insertInto(AUTHOR, AUTHOR.FIRST_NAME, AUTHOR.LAST_NAME)
+                    .values("Charlotte", "Roche")
+                    .values("Charlotte", "Roche1")
+                    .returning(AUTHOR.ID)
+                    .fetchOne();
+            */
+
         }
         catch(Exception e)
         {

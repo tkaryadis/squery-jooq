@@ -23,7 +23,6 @@
     0))
 
 (defn add-table-columns [table-obj cols]
-  (prn cols)
   (loop [cols cols]
     (if (empty? cols)
       table-obj

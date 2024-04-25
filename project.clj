@@ -6,6 +6,10 @@
   :dependencies [[org.clojure/clojure "1.11.0"]
                  ;;[org.jooq/jooq "3.18.7"]  ;;old working
                  [org.jooq/jooq "3.19.7"]                   ;;new-semitested
+                                  
+                 [org.postgresql/r2dbc-postgresql "1.0.5.RELEASE"]
+                 [io.projectreactor/reactor-core "3.5.16"]
+                 
                  [org.postgresql/postgresql "42.5.0"]
                  [com.mysql/mysql-connector-j "8.2.0"]
                  [org.flatland/ordered "1.5.9"]]

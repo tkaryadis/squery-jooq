@@ -20,6 +20,28 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Leiningen: com.google.protobuf/protobuf-java:3.21.9" level="project" />
     <orderEntry type="library" name="Leiningen: com.mysql/mysql-connector-j:8.2.0" level="project" />
+    <orderEntry type="library" name="Leiningen: com.ongres.scram/client:2.1" level="project" />
+    <orderEntry type="library" name="Leiningen: com.ongres.scram/common:2.1" level="project" />
+    <orderEntry type="library" name="Leiningen: com.ongres.stringprep/saslprep:1.1" level="project" />
+    <orderEntry type="library" name="Leiningen: com.ongres.stringprep/stringprep:1.1" level="project" />
+    <orderEntry type="library" name="Leiningen: io.netty/netty-buffer:4.1.108.Final" level="project" />
+    <orderEntry type="library" name="Leiningen: io.netty/netty-codec-dns:4.1.108.Final" level="project" />
+    <orderEntry type="library" name="Leiningen: io.netty/netty-codec-http:4.1.108.Final" level="project" />
+    <orderEntry type="library" name="Leiningen: io.netty/netty-codec-socks:4.1.108.Final" level="project" />
+    <orderEntry type="library" name="Leiningen: io.netty/netty-codec:4.1.108.Final" level="project" />
+    <orderEntry type="library" name="Leiningen: io.netty/netty-common:4.1.108.Final" level="project" />
+    <orderEntry type="library" name="Leiningen: io.netty/netty-handler-proxy:4.1.108.Final" level="project" />
+    <orderEntry type="library" name="Leiningen: io.netty/netty-handler:4.1.108.Final" level="project" />
+    <orderEntry type="library" name="Leiningen: io.netty/netty-resolver-dns-classes-macos:4.1.108.Final" level="project" />
+    <orderEntry type="library" name="Leiningen: io.netty/netty-resolver-dns-native-macos:4.1.108.Final:osx-x86_64" level="project" />
+    <orderEntry type="library" name="Leiningen: io.netty/netty-resolver-dns:4.1.108.Final" level="project" />
+    <orderEntry type="library" name="Leiningen: io.netty/netty-resolver:4.1.108.Final" level="project" />
+    <orderEntry type="library" name="Leiningen: io.netty/netty-transport-classes-epoll:4.1.108.Final" level="project" />
+    <orderEntry type="library" name="Leiningen: io.netty/netty-transport-native-epoll:4.1.108.Final:linux-x86_64" level="project" />
+    <orderEntry type="library" name="Leiningen: io.netty/netty-transport-native-unix-common:4.1.108.Final" level="project" />
+    <orderEntry type="library" name="Leiningen: io.netty/netty-transport:4.1.108.Final" level="project" />
+    <orderEntry type="library" name="Leiningen: io.projectreactor.netty/reactor-netty-core:1.1.18" level="project" />
+    <orderEntry type="library" name="Leiningen: io.projectreactor/reactor-core:3.5.16" level="project" />
     <orderEntry type="library" name="Leiningen: io.r2dbc/r2dbc-spi:1.0.0.RELEASE" level="project" />
     <orderEntry type="library" name="Leiningen: nrepl:1.0.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.checkerframework/checker-qual:3.5.0" level="project" />
@@ -30,6 +52,7 @@
     <orderEntry type="library" name="Leiningen: org.jooq/jooq:3.19.7" level="project" />
     <orderEntry type="library" name="Leiningen: org.nrepl/incomplete:0.1.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.postgresql/postgresql:42.5.0" level="project" />
-    <orderEntry type="library" name="Leiningen: org.reactivestreams/reactive-streams:1.0.3" level="project" />
+    <orderEntry type="library" name="Leiningen: org.postgresql/r2dbc-postgresql:1.0.5.RELEASE" level="project" />
+    <orderEntry type="library" name="Leiningen: org.reactivestreams/reactive-streams:1.0.4" level="project" />
   </component>
 </module>

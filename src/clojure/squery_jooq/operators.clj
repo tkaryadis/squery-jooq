@@ -1,5 +1,6 @@
 (ns squery-jooq.operators
   (:refer-clojure :exclude [+ inc - dec * mod
+                            abs
                             even? odd?
                             = not= > >= < <=
                             and or not

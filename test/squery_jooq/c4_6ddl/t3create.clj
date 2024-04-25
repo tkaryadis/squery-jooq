@@ -51,5 +51,14 @@
                [:col3 :long true]]
               [(DSL/primaryKey (into-array String ["col1"]))])
 
+
+;;Create table auto-increment primary key id
+#_(create-table :temptable
+              [[:id (-> (SQLDataType/INTEGER)
+                        (.nullable false)
+                        (.identity true))]
+               :name]
+              [(DSL/primaryKey (into-array String ["id"]))])
+
 ;;Create table(from select)
 ;(create-table :book-copy (q :book))

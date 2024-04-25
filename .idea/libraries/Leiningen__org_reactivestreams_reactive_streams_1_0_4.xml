@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Leiningen: org.reactivestreams/reactive-streams:1.0.4">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

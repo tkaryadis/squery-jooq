@@ -5,7 +5,7 @@
             [squery-jooq.state :refer [ctx]]
             [squery-jooq.utils.general :refer [ordered-map]])
   (:import (org.jooq.impl DSL)
-           (org.jooq Condition Field Select Table JSONEntry Row Row1 Row2 Row3 Row4 Row5 Row6)))
+           (org.jooq Condition Field Record2 Select Table JSONEntry Row Row1 Row2 Row3 Row4 Row5 Row6)))
 
 ;;the first 2 functions is to use
 ;;  keyword instead(col ...)
@@ -271,3 +271,15 @@
               (merge m field)))  ;; if not keyword keep the orinal value
           (ordered-map)
           fields))
+
+(defn record-to-vec [field-names record]
+  (let [nfields (count field-names)]
+    (loop [values []
+           field-names field-names]
+      (if (empty? field-names)
+        values
+        #_(if (= nfields 1)
+          (first values)
+          values)
+        (recur (conj values (.get record (name (first field-names))))
+               (rest field-names))))))
