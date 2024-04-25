@@ -4,7 +4,7 @@
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
             [squery-jooq.commands.query :refer [q pq s ps]]
-            [squery-jooq.commands.update :refer [insert]]
+            [squery-jooq.commands.update :refer [insert insert-values]]
             [squery-jooq.commands.admin :refer [create-table-if-not-exist drop-table-if-exists]]
             [squery-jooq.state :refer [connect-postgres-reactive ctx]]
             [squery-jooq.printing :refer [print-results print-sql]]
@@ -25,14 +25,25 @@
       [[:id (-> (SQLDataType/BIGINT)
                 (.nullable false)
                 (.identity true))]
-       :name]
+       :first
+       :last]
       [(DSL/primaryKey (into-array String ["id"]))])
     (.blockFirst))
 
-(-> (insert :temptable [:name] [["takis"] ["kostas"]])
+(-> (insert-values :temptable [:first :last] [["first1" "last1"] ["first2" "last2"]])
     (.blockFirst))
 
-(-> (q :temptable)
-    (.subscribe (cfn [x] (prn x))))
+(-> ^Flux (q :temptable)
+    (.collectList)
+    ^Mono (.doOnNext (cfn [x] (prn x)))
+    (.block))
+
+(-> (insert-values :temptable [:first :last] [["first3" "last3"] ["first4" "last4"]] [:first])
+    (.doOnNext (cfn [x] (prn x)))
+    (.blockFirst))
+
+(-> (insert-values :temptable [:first :last] [["first5" "last5"]] [:first])
+    (.doOnNext (cfn [x] (prn x)))
+    (.blockFirst))
 
 (.read (System/in))

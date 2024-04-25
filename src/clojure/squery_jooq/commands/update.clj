@@ -1,4 +1,5 @@
 (ns squery-jooq.commands.update
+  (:use squery-jooq.reactor-utils.functional-interfaces)
   (:require [squery-jooq.internal.query :refer [pipeline separate-with-forms switch-select-from update-pipeline delete-pipeline]]
             [squery-jooq.state :refer [ctx]]
             [squery-jooq.internal.common :refer [table columns column get-sql record-to-vec]]
@@ -14,7 +15,9 @@
 (defn insert-values
   ([table-name fields values return-fields]
    (let [insert-step (-> @ctx (.insertInto (table (name table-name)) (columns fields)))
-         nvalues (count values)]
+         nvalues (count values)
+         ;_ (prn nvalues)
+         ]
      (loop [values values]
        (if (empty? values)
          (if (empty? return-fields)
@@ -22,9 +25,19 @@
              (Flux/from insert-step)
              (.execute insert-step))
            (let [insert-step (.returning ^InsertValuesStep2 insert-step (columns return-fields))]
-             (if (= nvalues 1)
-               (record-to-vec return-fields (.fetchOne insert-step))
-               (mapv (partial record-to-vec return-fields) (.fetch insert-step)))))
+             (if @state/reactive?
+               (let [insert-step-flux (Flux/from insert-step)]
+                 (if (= nvalues 1)
+                   (-> insert-step-flux
+                       (.map (ffn [r] [(record-to-vec return-fields r)])))
+                   (-> insert-step-flux
+                       (.collectList)
+                       (.map (ffn [rs]
+                               (mapv (partial record-to-vec return-fields) rs)))
+                       (.flux))))
+               (if (= nvalues 1)
+                 [(record-to-vec return-fields (.fetchOne insert-step))]
+                 (mapv (partial record-to-vec return-fields) (.fetch insert-step))))))
          (do (.values insert-step (first values))
              (recur (rest values)))))))
   ([table-name fields values]
@@ -47,9 +60,11 @@
                (conj all-values values))))))
 
 (defn insert
-  ([table-name fields-values return-fields]
-   (let [first-map (into [] (first fields-values))
-         header (mapv first first-map)
+  ([table-name header fields-values return-fields]
+   (let [header (if (or (= header [:*]) (= header []))
+                  header
+                  (let [first-map (into [] (first fields-values))]
+                    (mapv first first-map)))
          values (get-all-values header fields-values)
          return-values (insert-values table-name header values return-fields)]
      (if (empty? return-fields)
@@ -57,8 +72,8 @@
        (mapv (fn [values]
                (zipmap return-fields values))
              return-values))))
-  ([table-name fields-values]
-   (insert table-name fields-values [])))
+  ([table-name header fields-values]
+   (insert table-name header fields-values [])))
 
 ;;----------------------Update----------------------------------------------
 

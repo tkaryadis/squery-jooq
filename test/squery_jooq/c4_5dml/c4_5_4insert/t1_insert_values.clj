@@ -42,19 +42,23 @@
 ;;returning fields of the rows that were inserted
 (insert-values :temptable
                [:last :first]
-               [["last3" "first3"]]
+               [["last4" "first4"]]
                [:last])
 
 (pq :temptable)
 
 (insert :temptable
-        [{:last "last4" :first "first4"}
-         {:first "first5" :last "last5"}])
+        [:last :first]                                      ;;fields that i want to insert
+        [{:last "last5" :first "first5"}
+         {:first "first6" :last "last6"}])
 
 (pq :temptable)
 
 ;;returning maps, wit the fields that i want, from the inserted docs
-(insert :temptable
-        [{:last "last4" :first "first4"}
-         {:first "first5" :last "last5"}]
-        [:first])
+(prn (insert :temptable
+             [:first]
+             [{:last "last7" :first "first7"}
+              {:first "first8" :last "last8"}]
+             [:first]))
+
+(pq :temptable)
