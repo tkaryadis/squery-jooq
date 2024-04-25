@@ -61,11 +61,10 @@
 (defn insert
   ([table-name header fields-values return-fields]
    (let [header (if (or (= header [:*]) (= header []))
-                  []
                   (let [first-map (into [] (first fields-values))]
-                    (mapv first first-map)))
+                    (mapv first first-map))
+                  header)
          values (get-all-values header fields-values)
-         header (mapv keyword header)  ;;to be like insert-values header with keywords
          return-values (insert-values table-name header values return-fields)]
      (if @state/reactive?
        (-> return-values
