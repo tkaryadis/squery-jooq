@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="Leiningen: io.projectreactor/reactor-core:3.5.16">
-    <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/projectreactor/reactor-core/3.5.16/reactor-core-3.5.16.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

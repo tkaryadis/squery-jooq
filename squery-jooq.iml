@@ -41,7 +41,7 @@
     <orderEntry type="library" name="Leiningen: io.netty/netty-transport-native-unix-common:4.1.108.Final" level="project" />
     <orderEntry type="library" name="Leiningen: io.netty/netty-transport:4.1.108.Final" level="project" />
     <orderEntry type="library" name="Leiningen: io.projectreactor.netty/reactor-netty-core:1.1.18" level="project" />
-    <orderEntry type="library" name="Leiningen: io.projectreactor/reactor-core:3.5.16" level="project" />
+    <orderEntry type="library" name="Leiningen: io.projectreactor/reactor-core:3.6.3" level="project" />
     <orderEntry type="library" name="Leiningen: io.r2dbc/r2dbc-spi:1.0.0.RELEASE" level="project" />
     <orderEntry type="library" name="Leiningen: nrepl:1.0.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.checkerframework/checker-qual:3.5.0" level="project" />

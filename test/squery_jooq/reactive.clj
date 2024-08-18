@@ -1,5 +1,4 @@
 (ns squery-jooq.reactive
-  (:use squery-jooq.reactor-utils.functional-interfaces)
   (:refer-clojure :only [])
   (:require [squery-jooq.operators :refer :all]
             [squery-jooq.stages :refer :all]
@@ -36,31 +35,31 @@
 
 (-> ^Flux (q :temptable)
     (.collectList)
-    ^Mono (.doOnNext (cfn [x] (prn x)))
+    ^Mono (.doOnNext (fn [x] (prn x)))
     (.block))
 
 (-> (insert-values :temptable [:first :last] [["first3" "last3"] ["first4" "last4"]] [:first])
-    (.doOnNext (cfn [x] (prn x)))
+    (.doOnNext (fn [x] (prn x)))
     (.blockFirst))
 
 )
 
 (-> (insert-values :temptable [:first :last] [["first5" "last5"]] [:first])
-    (.doOnNext (cfn [x] (prn x)))
+    (.doOnNext (fn [x] (prn x)))
     (.blockFirst))
 
 
 (-> (insert :temptable
             []                                              ; [:first :last]
             [{:first "first6" :last "last6"}])
-    (.doOnNext (cfn [x] (prn x)))
+    (.doOnNext (fn [x] (prn x)))
     (.blockFirst))
 
 (-> (insert :temptable
             [] ;[:first :last]
             [{:first "first7" :last "last7"}]
             [:first])
-    (.doOnNext (cfn [x] (prn x)))
+    (.doOnNext (fn [x] (prn x)))
     (.blockFirst))
 
 (.read (System/in))

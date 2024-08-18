@@ -1,5 +1,5 @@
 (ns squery-jooq.commands.query
-  (:use squery-jooq.reactor-utils.functional-interfaces)
+
   (:require [squery-jooq.internal.query :refer [pipeline separate-with-forms switch-select-from update-pipeline delete-pipeline]]
             [squery-jooq.state :as state]
             [squery-jooq.state :refer [ctx]]

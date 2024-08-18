@@ -1,5 +1,5 @@
 (ns squery-jooq.commands.update
-  (:use squery-jooq.reactor-utils.functional-interfaces)
+
   (:require [squery-jooq.internal.query :refer [pipeline separate-with-forms switch-select-from update-pipeline delete-pipeline]]
             [squery-jooq.state :refer [ctx]]
             [squery-jooq.internal.common :refer [table columns column get-sql record-to-vec]]
@@ -28,10 +28,10 @@
                (let [insert-step-flux (Flux/from insert-step)]
                  (if (= nvalues 1)
                    (-> insert-step-flux
-                       (.map (ffn [r] [(record-to-vec return-fields r)])))
+                       (.map (fn [r] [(record-to-vec return-fields r)])))
                    (-> insert-step-flux
                        (.collectList)
-                       (.map (ffn [rs]
+                       (.map (fn [rs]
                                (mapv (partial record-to-vec return-fields) rs)))
                        (.flux))))
                (if (= nvalues 1)
@@ -68,7 +68,7 @@
          return-values (insert-values table-name header values return-fields)]
      (if @state/reactive?
        (-> return-values
-           (.map (ffn [rvalues]
+           (.map (fn [rvalues]
                    (if (empty? return-fields)
                      rvalues
                      (mapv (fn [values]

@@ -3,12 +3,12 @@
   :url "http://example.com/FIXME"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
             :url "https://www.eclipse.org/legal/epl-2.0/"}
-  :dependencies [[org.clojure/clojure "1.11.0"]
+  :dependencies [[org.clojure/clojure "1.12.0-rc1"]
                  ;;[org.jooq/jooq "3.18.7"]  ;;old working
                  [org.jooq/jooq "3.19.7"]                   ;;new-semitested
                                   
                  [org.postgresql/r2dbc-postgresql "1.0.5.RELEASE"]
-                 [io.projectreactor/reactor-core "3.5.16"]
+                 [io.projectreactor/reactor-core "3.6.3"]
                  
                  [org.postgresql/postgresql "42.5.0"]
                  [com.mysql/mysql-connector-j "8.2.0"]

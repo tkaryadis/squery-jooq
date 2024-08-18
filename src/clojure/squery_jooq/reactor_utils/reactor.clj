@@ -22,8 +22,8 @@
 (defn context-to-map [^Context context]
   (-> (.stream context)
       (.collect (Collectors/toMap
-                  (ffn [^Map$Entry e] (.getKey e))
-                  (ffn [^Map$Entry e] (.getValue e))))
+                  (fn [^Map$Entry e] (.getKey e))
+                  (fn [^Map$Entry e] (.getValue e))))
       ((partial into {}))))
 
 
